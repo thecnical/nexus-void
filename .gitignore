@@ -1,0 +1,49 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+/nexus-void
+/server
+/server.exe
+
+# Test
+*.test
+*.out
+coverage.txt
+coverage.html
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Dependencies
+vendor/
+
+# Node.js (dashboard)
+dashboard/node_modules/
+dashboard/build/
+dashboard/.env.local
+
+# Brain data (root level only)
+/.nexus-void/
+/brain/
+/sessions/
+/reports/
+/logs/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Render
+render.env
