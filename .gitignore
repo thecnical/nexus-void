@@ -47,3 +47,6 @@ dashboard/.env.local
 
 # Render
 render.env
+
+# Backend (moved to separate repo)
+backend/
