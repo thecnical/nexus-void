@@ -19,6 +19,7 @@ import (
 	"github.com/nexus-void/nexus-void/pkg/etherbreach"
 	"github.com/nexus-void/nexus-void/pkg/intel"
 	"github.com/nexus-void/nexus-void/pkg/mobilebreach"
+	"github.com/nexus-void/nexus-void/pkg/osintbreach"
 	"github.com/nexus-void/nexus-void/pkg/session"
 )
 
@@ -367,11 +368,7 @@ func (cs *ChatSession) handleInput(input string) {
 		}
 		cs.runBreachCheck()
 	case "osint":
-		if cs.target == "" {
-			fmt.Println(CRr + "[!] Set target first" + CR)
-			return
-		}
-		cs.runOSINT()
+		cs.handleOsintCommand(parts)
 	case "weaponize":
 		if cs.target == "" {
 			fmt.Println(CRr + "[!] Set target first" + CR)
@@ -1520,6 +1517,116 @@ func (cs *ChatSession) handleMobileCommand(parts []string) {
 	default:
 		fmt.Println(CRr + "[!] Unknown mobile command: " + sub + CR)
 		fmt.Println("      Type 'mobile' for available commands.")
+	}
+}
+
+func (cs *ChatSession) handleOsintCommand(parts []string) {
+	if len(parts) < 2 {
+		fmt.Println(CBl + "═══════════════════════════════════════════════════════════════" + CR)
+		fmt.Println(CBl + "              OSINTBREACH COMMANDS" + CR)
+		fmt.Println(CBl + "═══════════════════════════════════════════════════════════════" + CR)
+		fmt.Println("  osint recon <domain>            Full autonomous reconnaissance")
+		fmt.Println("  osint surface <domain>          Attack surface mapping")
+		fmt.Println("  osint persona <domain>          People OSINT & breach checks")
+		fmt.Println("  osint vuln <domain>             Vulnerability discovery")
+		fmt.Println("  osint supply <path>             Supply chain analysis")
+		fmt.Println("  osint report <domain>           Generate attack surface report")
+		fmt.Println("  osint status                    Show agent status")
+		fmt.Println()
+		return
+	}
+
+	sub := strings.ToLower(parts[1])
+	switch sub {
+	case "recon":
+		if len(parts) < 3 {
+			fmt.Println(CRr + "[!] Usage: osint recon <domain>" + CR)
+			return
+		}
+		domain := parts[2]
+		fmt.Printf(CRg+"[OSINTBREACH]"+CR+" Full reconnaissance: %s\n", domain)
+		cs.narrate("OSINTBREACH autonomous recon initiated on " + domain)
+		ob := osintbreach.New()
+		ob.Start(domain)
+		ob.Close()
+
+	case "surface":
+		if len(parts) < 3 {
+			fmt.Println(CRr + "[!] Usage: osint surface <domain>" + CR)
+			return
+		}
+		domain := parts[2]
+		fmt.Printf(CRg+"[OSINTBREACH]"+CR+" Surface mapping: %s\n", domain)
+		cs.narrate("BETA surface mapping started on " + domain)
+		ob := osintbreach.New()
+		ob.SurfaceScan(domain)
+		ob.Close()
+
+	case "persona":
+		if len(parts) < 3 {
+			fmt.Println(CRr + "[!] Usage: osint persona <domain>" + CR)
+			return
+		}
+		domain := parts[2]
+		fmt.Printf(CRg+"[OSINTBREACH]"+CR+" Persona hunt: %s\n", domain)
+		cs.narrate("GAMMA persona hunt initiated on " + domain)
+		ob := osintbreach.New()
+		ob.PersonaHunt(domain)
+		ob.Close()
+
+	case "vuln":
+		if len(parts) < 3 {
+			fmt.Println(CRr + "[!] Usage: osint vuln <domain>" + CR)
+			return
+		}
+		domain := parts[2]
+		fmt.Printf(CRg+"[OSINTBREACH]"+CR+" Vulnerability scan: %s\n", domain)
+		cs.narrate("DELTA vulnerability scan initiated on " + domain)
+		ob := osintbreach.New()
+		ob.VulnScan(domain)
+		ob.Close()
+
+	case "supply":
+		if len(parts) < 3 {
+			fmt.Println(CRr + "[!] Usage: osint supply <path>" + CR)
+			return
+		}
+		path := parts[2]
+		fmt.Printf(CRg+"[OSINTBREACH]"+CR+" Supply chain analysis: %s\n", path)
+		cs.narrate("EPSILON supply chain scan initiated on " + path)
+		ob := osintbreach.New()
+		ob.SupplyCheck(path)
+		ob.Close()
+
+	case "report":
+		if len(parts) < 3 {
+			fmt.Println(CRr + "[!] Usage: osint report <domain>" + CR)
+			return
+		}
+		domain := parts[2]
+		fmt.Printf(CRg+"[OSINTBREACH]"+CR+" Attack surface report: %s\n", domain)
+		cs.narrate("OMEGA generating attack surface report for " + domain)
+		ob := osintbreach.New()
+		ob.Recon(domain)
+		report := ob.GetSurfaceReport()
+		fmt.Printf("Domain: %s | Score: %.0f | Priority: %s\n",
+			report.Domain, report.Score, report.Priority)
+		ob.Close()
+
+	case "status":
+		fmt.Println(CBl + "═══════════════════════════════════════════════════════════════" + CR)
+		fmt.Println(CBl + "              OSINTBREACH AGENT STATUS" + CR)
+		fmt.Println(CBl + "═══════════════════════════════════════════════════════════════" + CR)
+		fmt.Println("  ALPHA   [Recon]        — idle")
+		fmt.Println("  BETA    [Surface]      — idle")
+		fmt.Println("  GAMMA   [Persona]      — idle")
+		fmt.Println("  DELTA   [Vuln]         — idle")
+		fmt.Println("  EPSILON [Supply]       — idle")
+		fmt.Println("  OMEGA   [Brain]        — idle")
+		fmt.Println()
+	default:
+		fmt.Println(CRr + "[!] Unknown osint command: " + sub + CR)
+		fmt.Println("      Type 'osint' for available commands.")
 	}
 }
 

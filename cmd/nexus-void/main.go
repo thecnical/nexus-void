@@ -15,6 +15,7 @@ import (
 	"github.com/nexus-void/nexus-void/pkg/brain"
 	"github.com/nexus-void/nexus-void/pkg/etherbreach"
 	"github.com/nexus-void/nexus-void/pkg/mobilebreach"
+	"github.com/nexus-void/nexus-void/pkg/osintbreach"
 	"github.com/nexus-void/nexus-void/pkg/report"
 	"github.com/nexus-void/nexus-void/pkg/session"
 	"github.com/nexus-void/nexus-void/pkg/tools"
@@ -451,6 +452,57 @@ Usage:
 	mbCmd.Flags().StringVarP(&mbFlags.Target, "target", "t", "", "Target: apk:file, ios:bundle, api:url")
 	mbCmd.Flags().StringVarP(&mbFlags.Mode, "mode", "m", "", "Mode: imsi, paging, esim")
 	rootCmd.AddCommand(mbCmd)
+
+	// OSINTBREACH command - autonomous reconnaissance
+	var obFlags struct {
+		Domain string
+		Mode   string
+	}
+	obCmd := &cobra.Command{
+		Use:   "osintbreach",
+		Short: "Launch OSINTBREACH autonomous reconnaissance system",
+		Long: `OSINTBREACH — Autonomous Reconnaissance & Attack Surface Weapon
+
+6 AI Agents working together:
+  ALPHA  — Domain & Subdomain Discovery (amass, subfinder, assetfinder)
+  BETA   — Attack Surface Mapping (httpx, katana, waybackurls, cloud hunting)
+  GAMMA  — People OSINT & Social Engineering (theHarvester, sherlock, holehe)
+  DELTA  — Vulnerability Discovery (nuclei, dalfox, gitleaks, paramspider)
+  EPSILON— Supply Chain Analysis (osv-scanner, trivy, gitleaks)
+  OMEGA  — AI Brain: Correlation, Scoring, Autonomous Chain
+
+Modes:
+  recon    Full-spectrum autonomous reconnaissance
+  persona  People & credential hunting only
+  vuln     Vulnerability scanning on discovered assets
+  supply   Supply chain & dependency analysis
+  report   Generate attack surface report
+
+Usage:
+  nexus-void osintbreach --domain example.com           # Full recon
+  nexus-void osintbreach --domain example.com --mode vuln # Vuln scan only`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			ob := osintbreach.New()
+			defer ob.Close()
+
+			domain := obFlags.Domain
+			if domain == "" && len(args) > 0 {
+				domain = args[0]
+			}
+
+			if domain == "" {
+				fmt.Println("[!] Usage: nexus-void osintbreach --domain example.com")
+				fmt.Println("     Or: nexus-void osintbreach example.com")
+				return nil
+			}
+
+			ob.Start(domain)
+			return nil
+		},
+	}
+	obCmd.Flags().StringVarP(&obFlags.Domain, "domain", "d", "", "Target domain")
+	obCmd.Flags().StringVarP(&obFlags.Mode, "mode", "m", "", "Mode: recon, persona, vuln, supply, report")
+	rootCmd.AddCommand(obCmd)
 
 	// Uninstall command - remove everything
 	rootCmd.AddCommand(&cobra.Command{

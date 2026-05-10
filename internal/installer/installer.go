@@ -92,6 +92,26 @@ var externalTools = []ToolDefinition{
 	{Name: "hackrf", Description: "HackRF SDR tools", Category: "network", CheckCommand: "hackrf_info --help", InstallMethods: []InstallMethod{{Type: "apt", Command: "hackrf", Priority: 1}}},
 	{Name: "pcsc-tools", Description: "Smart card reader tools", Category: "network", CheckCommand: "pcsc_scan --help", InstallMethods: []InstallMethod{{Type: "apt", Command: "pcsc-tools", Priority: 1}}},
 
+	// --- OSINT RECONNAISSANCE (OSINTBREACH) ---
+	{Name: "amass", Description: "DNS enumeration and attack surface mapping", Category: "network", CheckCommand: "amass --version", InstallMethods: []InstallMethod{{Type: "go_install", Command: "github.com/owasp-amass/amass/v4/...@master", Priority: 1}}},
+	{Name: "subfinder", Description: "Subdomain discovery via passive sources", Category: "network", CheckCommand: "subfinder --version", InstallMethods: []InstallMethod{{Type: "go_install", Command: "github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest", Priority: 1}}},
+	{Name: "assetfinder", Description: "Find domains and subdomains related to target", Category: "network", CheckCommand: "assetfinder --help", InstallMethods: []InstallMethod{{Type: "go_install", Command: "github.com/tomnomnom/assetfinder@latest", Priority: 1}}},
+	{Name: "findomain", Description: "Fast cross-platform subdomain enumerator", Category: "network", CheckCommand: "findomain --version", InstallMethods: []InstallMethod{{Type: "git_build", Command: "https://github.com/findomain/findomain.git,cargo build --release", Priority: 1}}},
+	{Name: "dnsx", Description: "Fast DNS resolver and brute forcer", Category: "network", CheckCommand: "dnsx --version", InstallMethods: []InstallMethod{{Type: "go_install", Command: "github.com/projectdiscovery/dnsx/cmd/dnsx@latest", Priority: 1}}},
+	{Name: "naabu", Description: "Fast port scanner", Category: "network", CheckCommand: "naabu --version", InstallMethods: []InstallMethod{{Type: "go_install", Command: "github.com/projectdiscovery/naabu/v2/cmd/naabu@latest", Priority: 1}}},
+	{Name: "waybackurls", Description: "Fetch known URLs from Wayback Machine", Category: "network", CheckCommand: "waybackurls --help", InstallMethods: []InstallMethod{{Type: "go_install", Command: "github.com/tomnomnom/waybackurls@latest", Priority: 1}}},
+	{Name: "gau", Description: "GetAllUrls - fetch URLs from multiple sources", Category: "network", CheckCommand: "gau --version", InstallMethods: []InstallMethod{{Type: "go_install", Command: "github.com/lc/gau/v2/cmd/gau@latest", Priority: 1}}},
+	{Name: "theHarvester", Description: "Email, subdomain and people OSINT gatherer", Category: "network", CheckCommand: "theHarvester --help", InstallMethods: []InstallMethod{{Type: "git_pip", Command: "https://github.com/laramies/theHarvester.git", Priority: 1}}},
+	{Name: "sherlock", Description: "Hunt social media accounts by username", Category: "network", CheckCommand: "sherlock --help", InstallMethods: []InstallMethod{{Type: "git_pip", Command: "https://github.com/sherlock-project/sherlock.git", Priority: 1}}},
+	{Name: "holehe", Description: "Check if email is registered on sites", Category: "network", CheckCommand: "holehe --help", InstallMethods: []InstallMethod{{Type: "pip", Command: "holehe", Priority: 1}}},
+	{Name: "h8mail", Description: "Email OSINT and password breach hunting", Category: "network", CheckCommand: "h8mail --help", InstallMethods: []InstallMethod{{Type: "pip", Command: "h8mail", Priority: 1}}},
+	{Name: "phoneinfoga", Description: "Advanced phone number OSINT scanner", Category: "network", CheckCommand: "phoneinfoga --version", InstallMethods: []InstallMethod{{Type: "go_install", Command: "github.com/sundowndev/phoneinfoga/v2@latest", Priority: 1}}},
+	{Name: "gitleaks", Description: "Detect secrets in git repos", Category: "network", CheckCommand: "gitleaks version", InstallMethods: []InstallMethod{{Type: "go_install", Command: "github.com/gitleaks/gitleaks@latest", Priority: 1}}},
+	{Name: "trufflehog", Description: "Find secrets in code, binaries, containers", Category: "network", CheckCommand: "trufflehog --version", InstallMethods: []InstallMethod{{Type: "go_install", Command: "github.com/trufflesecurity/trufflehog@latest", Priority: 1}}},
+	{Name: "osv-scanner", Description: "OSV dependency vulnerability scanner", Category: "network", CheckCommand: "osv-scanner --version", InstallMethods: []InstallMethod{{Type: "go_install", Command: "github.com/google/osv-scanner/cmd/osv-scanner@latest", Priority: 1}}},
+	{Name: "trivy", Description: "Container, filesystem, repo vulnerability scanner", Category: "network", CheckCommand: "trivy --version", InstallMethods: []InstallMethod{{Type: "apt", Command: "trivy", Priority: 1}}},
+	{Name: "paramspider", Description: "Parameter discovery from web archives", Category: "network", CheckCommand: "paramspider --help", InstallMethods: []InstallMethod{{Type: "git_pip", Command: "https://github.com/devanshbatham/ParamSpider.git", Priority: 1}}},
+
 	// --- Web ---
 	{Name: "sqlmap", Description: "SQL injection automation", Category: "web", CheckCommand: "sqlmap --version", InstallMethods: []InstallMethod{{Type: "apt", Command: "sqlmap", Priority: 1}}},
 	{Name: "dalfox", Description: "XSS scanner", Category: "web", CheckCommand: "dalfox version", InstallMethods: []InstallMethod{{Type: "go_install", Command: "github.com/hahwul/dalfox/v2@latest", Priority: 1}}},
@@ -99,21 +119,10 @@ var externalTools = []ToolDefinition{
 	{Name: "katana", Description: "Fast web crawler", Category: "web", CheckCommand: "katana -version", InstallMethods: []InstallMethod{{Type: "go_install", Command: "github.com/projectdiscovery/katana/cmd/katana@latest", Priority: 1}}},
 	{Name: "ffuf", Description: "Directory fuzzing", Category: "web", CheckCommand: "ffuf -V", InstallMethods: []InstallMethod{{Type: "go_install", Command: "github.com/ffuf/ffuf@latest", Priority: 1}}},
 	{Name: "gobuster", Description: "Directory/DNS fuzzer", Category: "web", CheckCommand: "gobuster version", InstallMethods: []InstallMethod{{Type: "go_install", Command: "github.com/OJ/gobuster/v3@latest", Priority: 1}}},
-	{Name: "gau", Description: "URL extraction", Category: "web", CheckCommand: "gau --version", InstallMethods: []InstallMethod{{Type: "go_install", Command: "github.com/lc/gau/v2/cmd/gau@latest", Priority: 1}}},
 	{Name: "httpx", Description: "Fast HTTP prober", Category: "web", CheckCommand: "httpx -version", InstallMethods: []InstallMethod{{Type: "go_install", Command: "github.com/projectdiscovery/httpx/cmd/httpx@latest", Priority: 1}}},
-	{Name: "paramspider", Description: "Parameter discovery", Category: "web", CheckCommand: "paramspider --help", InstallMethods: []InstallMethod{{Type: "git_pip", Command: "https://github.com/devanshbatham/ParamSpider.git", Priority: 1}}},
 	{Name: "commix", Description: "Command injection", Category: "web", CheckCommand: "commix --version", InstallMethods: []InstallMethod{{Type: "git_pip", Command: "https://github.com/commixproject/commix.git", Priority: 1}}},
 	{Name: "xsstrike", Description: "XSS detection", Category: "web", CheckCommand: "xsstrike --help", InstallMethods: []InstallMethod{{Type: "git_pip", Command: "https://github.com/s0md3v/XSStrike.git", Priority: 1}}},
 	{Name: "wpscan", Description: "WordPress scanner", Category: "web", CheckCommand: "wpscan --version", InstallMethods: []InstallMethod{{Type: "gem", Command: "wpscan", Priority: 1}, {Type: "apt", Command: "wpscan", Priority: 2}}},
-
-	// --- OSINT ---
-	{Name: "amass", Description: "Subdomain enumeration", Category: "osint", CheckCommand: "amass -version", InstallMethods: []InstallMethod{{Type: "go_install", Command: "github.com/owasp-amass/amass/v4/...@master", Priority: 1}}},
-	{Name: "subfinder", Description: "Subdomain discovery", Category: "osint", CheckCommand: "subfinder -version", InstallMethods: []InstallMethod{{Type: "go_install", Command: "github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest", Priority: 1}}},
-	{Name: "uncover", Description: "Search engine queries", Category: "osint", CheckCommand: "uncover -version", InstallMethods: []InstallMethod{{Type: "go_install", Command: "github.com/projectdiscovery/uncover/cmd/uncover@latest", Priority: 1}}},
-	{Name: "theHarvester", Description: "Email/subdomain harvester", Category: "osint", CheckCommand: "theHarvester --help", InstallMethods: []InstallMethod{{Type: "git_pip", Command: "https://github.com/laramies/theHarvester.git", Priority: 1}, {Type: "apt", Command: "theharvester", Priority: 2}}},
-	{Name: "spiderfoot", Description: "OSINT automation", Category: "osint", CheckCommand: "spiderfoot --help", InstallMethods: []InstallMethod{{Type: "git_pip", Command: "https://github.com/smicallef/spiderfoot.git", Priority: 1}}},
-	{Name: "reconftw", Description: "Full recon pipeline", Category: "osint", CheckCommand: "reconftw --help", InstallMethods: []InstallMethod{{Type: "git_clone", Command: "https://github.com/six2dez/reconftw.git", Priority: 1}}},
-	{Name: "sherlock", Description: "Username OSINT", Category: "osint", CheckCommand: "sherlock --help", InstallMethods: []InstallMethod{{Type: "git_pip", Command: "https://github.com/sherlock-project/sherlock.git", Priority: 1}}},
 
 	// --- Post-Exploitation ---
 	{Name: "metasploit", Description: "Exploit framework", Category: "postexploit", CheckCommand: "msfconsole --version", InstallMethods: []InstallMethod{{Type: "apt", Command: "metasploit-framework", Priority: 1}}},
