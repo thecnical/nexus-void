@@ -9,7 +9,7 @@ set -e
 
 NEXUS_VERSION="3.0.0"
 NEXUS_REPO="https://github.com/thecnical/nexus-void.git"
-BACKEND_REPO="https://github.com/mrgithacks/Nexus-Void-backend.git"
+BACKEND_REPO=${BACKEND_REPO:-"https://github.com/mrgithacks/Nexus-Void-backend.git"}
 INSTALL_DIR="/opt/nexus-void"
 BIN_DIR="/usr/local/bin"
 
