@@ -3,7 +3,10 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"net/http"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -130,6 +133,7 @@ func NewChatSession(voice bool) *ChatSession {
 
 func (cs *ChatSession) Run() {
 	printBanner()
+	cs.startLocalServices()
 	cs.showWelcome()
 
 	for {
@@ -166,6 +170,130 @@ func (cs *ChatSession) showWelcome() {
 	fmt.Println("  " + CRc + "@categories" + CR + "          → Manual category selection")
 	fmt.Println("  " + CRc + "@swarm" + CR + "               → Deploy all 6 agents simultaneously")
 	fmt.Println()
+}
+
+func (cs *ChatSession) startLocalServices() {
+	fmt.Println(CRg + "[+}" + CR + " Initializing local fullstack environment...")
+
+	if cs.isBackendRunning() {
+		fmt.Println(CRg + "[+}" + CR + " Backend already running on localhost:8080")
+	} else {
+		cs.startBackend()
+	}
+
+	if cs.isDashboardRunning() {
+		fmt.Println(CRg + "[+}" + CR + " Dashboard already running on localhost:3000")
+	} else {
+		cs.startDashboard()
+	}
+
+	fmt.Println()
+}
+
+func (cs *ChatSession) isBackendRunning() bool {
+	client := &http.Client{Timeout: 2 * time.Second}
+	resp, err := client.Get("http://localhost:8080/api/status")
+	if err != nil {
+		return false
+	}
+	defer resp.Body.Close()
+	return resp.StatusCode == http.StatusOK
+}
+
+func (cs *ChatSession) isDashboardRunning() bool {
+	client := &http.Client{Timeout: 2 * time.Second}
+	resp, err := client.Get("http://localhost:3000")
+	if err != nil {
+		return false
+	}
+	defer resp.Body.Close()
+	return resp.StatusCode == http.StatusOK
+}
+
+func (cs *ChatSession) startBackend() {
+	cwd, err := os.Getwd()
+	if err != nil {
+		fmt.Println(CRr+"[!}"+CR+" Cannot determine working directory:", err)
+		return
+	}
+
+	backendDir := filepath.Join(cwd, "backend")
+	if _, err := os.Stat(backendDir); os.IsNotExist(err) {
+		fmt.Println(CRy+"[!}"+CR+" Backend directory not found at", backendDir)
+		return
+	}
+
+	backendBin := filepath.Join(backendDir, "server")
+	if os.PathSeparator == '\\' {
+		backendBin += ".exe"
+	}
+
+	var cmd *exec.Cmd
+	if _, err := os.Stat(backendBin); err == nil {
+		cmd = exec.Command(backendBin, "-addr", ":8080")
+		cmd.Dir = backendDir
+	} else {
+		cmd = exec.Command("go", "run", "./cmd/server", "-addr", ":8080")
+		cmd.Dir = backendDir
+	}
+
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Start(); err != nil {
+		fmt.Println(CRr+"[!}"+CR+" Failed to start backend:", err)
+		return
+	}
+
+	fmt.Println(CRg + "[+}" + CR + " Backend server starting on localhost:8080...")
+
+	for i := 0; i < 15; i++ {
+		time.Sleep(500 * time.Millisecond)
+		if cs.isBackendRunning() {
+			fmt.Println(CRg + "[+}" + CR + " Backend connected.")
+			return
+		}
+	}
+	fmt.Println(CRy + "[!}" + CR + " Backend start timeout. Check manually.")
+}
+
+func (cs *ChatSession) startDashboard() {
+	cwd, err := os.Getwd()
+	if err != nil {
+		fmt.Println(CRr+"[!}"+CR+" Cannot determine working directory:", err)
+		return
+	}
+
+	dashboardDir := filepath.Join(cwd, "dashboard")
+	if _, err := os.Stat(dashboardDir); os.IsNotExist(err) {
+		fmt.Println(CRy+"[!}"+CR+" Dashboard directory not found at", dashboardDir)
+		return
+	}
+
+	nodeModules := filepath.Join(dashboardDir, "node_modules")
+	if _, err := os.Stat(nodeModules); os.IsNotExist(err) {
+		fmt.Println(CRy + "[!}" + CR + " Dashboard dependencies missing. Run 'npm install' in dashboard/")
+		return
+	}
+
+	cmd := exec.Command("npm", "start")
+	cmd.Dir = dashboardDir
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Start(); err != nil {
+		fmt.Println(CRr+"[!}"+CR+" Failed to start dashboard:", err)
+		return
+	}
+
+	fmt.Println(CRg + "[+}" + CR + " Dashboard starting on localhost:3000...")
+
+	for i := 0; i < 20; i++ {
+		time.Sleep(1 * time.Second)
+		if cs.isDashboardRunning() {
+			fmt.Println(CRg + "[+}" + CR + " Dashboard ready at http://localhost:3000")
+			return
+		}
+	}
+	fmt.Println(CRy + "[!}" + CR + " Dashboard start timeout.")
 }
 
 func (cs *ChatSession) handleInput(input string) {
