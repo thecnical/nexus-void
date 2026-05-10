@@ -8,7 +8,7 @@ set -e
 # ╚═══════════════════════════════════════════════════════════════╝
 
 NEXUS_VERSION="3.0.0"
-NEXUS_REPO="https://github.com/nexus-void/nexus-void.git"
+NEXUS_REPO="https://github.com/thecnical/nexus-void.git"
 INSTALL_DIR="/opt/nexus-void"
 BIN_DIR="/usr/local/bin"
 
