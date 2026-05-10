@@ -228,8 +228,8 @@ func (w *WirelessSpecter) CrackWPA(handshakeFile, wordlist string) bool {
 
 	fmt.Printf("[*] Running: aircrack-ng -w %s %s\n", wordlist, handshakeFile)
 	cmd := exec.Command("aircrack-ng", "-w", wordlist, handshakeFile)
-	cmd.Stdout = exec.Stdout
-	cmd.Stderr = exec.Stderr
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
 	cmd.Run()
 	return true
 }
@@ -327,8 +327,8 @@ func (w *WirelessSpecter) BluetoothSniff(targetAddr string) bool {
 	fmt.Printf("[*] Running: ubertooth-btle -f -t %s\n", targetAddr)
 	fmt.Println("[*] Capturing BLE packets. Press Ctrl+C to stop.")
 	cmd := exec.Command("sudo", "ubertooth-btle", "-f", "-t", targetAddr)
-	cmd.Stdout = exec.Stdout
-	cmd.Stderr = exec.Stderr
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
 	cmd.Run()
 	return true
 }

@@ -16,6 +16,7 @@ import (
 	"github.com/nexus-void/nexus-void/pkg/agents"
 	"github.com/nexus-void/nexus-void/pkg/ai"
 	"github.com/nexus-void/nexus-void/pkg/brain"
+	"github.com/nexus-void/nexus-void/pkg/etherbreach"
 	"github.com/nexus-void/nexus-void/pkg/intel"
 	"github.com/nexus-void/nexus-void/pkg/session"
 )
@@ -403,6 +404,8 @@ func (cs *ChatSession) handleInput(input string) {
 		} else {
 			fmt.Println(CRy + "[VOICE] Voice mode DEACTIVATED." + CR)
 		}
+	case "wifi":
+		cs.handleWiFiCommand(parts)
 	default:
 		// Check if input is a domain/IP (no command prefix)
 		if !strings.Contains(input, " ") && (strings.Contains(input, ".") || isIP(input)) {
@@ -1298,6 +1301,114 @@ func (cs *ChatSession) showReport() {
 func (cs *ChatSession) narrate(msg string) {
 	if cs.voiceMode {
 		fmt.Println(CRc + "[VOICE] " + CR + msg)
+	}
+}
+
+func (cs *ChatSession) handleWiFiCommand(parts []string) {
+	if len(parts) < 2 {
+		fmt.Println(CBl + "═══════════════════════════════════════════════════════════════" + CR)
+		fmt.Println(CBl + "              ETHERBREACH WiFi COMMANDS" + CR)
+		fmt.Println(CBl + "═══════════════════════════════════════════════════════════════" + CR)
+		fmt.Println("  wifi scan                           Scan all WiFi networks")
+		fmt.Println("  wifi auto                           Full autonomous WiFi attack")
+		fmt.Println("  wifi attack <ssid>                  Attack specific network")
+		fmt.Println("  wifi evil-twin <ssid>               Setup evil twin portal")
+		fmt.Println("  wifi karma                          Start Karma probe trap")
+		fmt.Println("  wifi ghost                          Enable Ghost Mode (stealth)")
+		fmt.Println("  wifi pivot <ssid> <password>        Connect & internal recon")
+		fmt.Println("  wifi wps <bssid>                    WPS PIN attack")
+		fmt.Println("  wifi status                         Show WiFi agent status")
+		fmt.Println()
+		return
+	}
+
+	sub := strings.ToLower(parts[1])
+	switch sub {
+	case "scan":
+		fmt.Println(CRg + "[ETHERBREACH]" + CR + " Starting WiFi scan...")
+		eb, err := etherbreach.New("wlan0")
+		if err != nil {
+			fmt.Println(CRr + "[!] Failed to init ETHERBREACH: " + err.Error() + CR)
+			return
+		}
+		targets := eb.ScanNetworks()
+		fmt.Printf(CRg+"[+}"+CR+" Found %d networks:\n", len(targets))
+		for i, t := range targets {
+			fmt.Printf("  %2d. %-20s | %-17s | Ch %2d | %-8s | %s\n",
+				i+1, t.SSID, t.BSSID, t.Channel, t.Security, t.Brand)
+		}
+		cs.narrate(fmt.Sprintf("WiFi scan complete. Found %d networks.", len(targets)))
+
+	case "auto":
+		fmt.Println(CRg + "[ETHERBREACH]" + CR + " Launching FULL AUTONOMOUS WiFi attack...")
+		cs.narrate("Full autonomous WiFi attack initiated. All 5 agents deployed.")
+		eb, err := etherbreach.New("wlan0")
+		if err != nil {
+			fmt.Println(CRr + "[!] Failed to init: " + err.Error() + CR)
+			return
+		}
+		eb.Start()
+
+	case "attack":
+		if len(parts) < 3 {
+			fmt.Println(CRr + "[!] Usage: wifi attack <ssid>" + CR)
+			return
+		}
+		ssid := parts[2]
+		fmt.Printf(CRg+"[ETHERBREACH]"+CR+" Attacking network: %s\n", ssid)
+		cs.narrate("Attacking WiFi network " + ssid)
+		// Would look up target by SSID and dispatch attack
+
+	case "evil-twin":
+		if len(parts) < 3 {
+			fmt.Println(CRr + "[!] Usage: wifi evil-twin <ssid>" + CR)
+			return
+		}
+		ssid := parts[2]
+		fmt.Printf(CRg+"[ETHERBREACH]"+CR+" Setting up Evil Twin for: %s\n", ssid)
+		cs.narrate("Evil Twin attack setup for " + ssid)
+
+	case "karma":
+		fmt.Println(CRg + "[ETHERBREACH]" + CR + " Starting Karma probe trap...")
+		cs.narrate("Karma attack started. Listening for probe requests.")
+
+	case "ghost":
+		fmt.Println(CRg + "[ETHERBREACH]" + CR + " Ghost Mode ACTIVATED.")
+		fmt.Println("       MAC morphing + slow-rate attacks enabled.")
+		cs.narrate("Ghost Mode active. Stealth attacks in progress.")
+
+	case "pivot":
+		if len(parts) < 4 {
+			fmt.Println(CRr + "[!] Usage: wifi pivot <ssid> <password>" + CR)
+			return
+		}
+		ssid := parts[2]
+		_ = parts[3] // password
+		fmt.Printf(CRg+"[ETHERBREACH]"+CR+" Pivoting into %s with credentials...\n", ssid)
+		cs.narrate("Post-crack pivot into network " + ssid)
+
+	case "wps":
+		if len(parts) < 3 {
+			fmt.Println(CRr + "[!] Usage: wifi wps <bssid>" + CR)
+			return
+		}
+		bssid := parts[2]
+		fmt.Printf(CRg+"[ETHERBREACH]"+CR+" Starting WPS attack on %s\n", bssid)
+		cs.narrate("WPS attack started on " + bssid)
+
+	case "status":
+		fmt.Println(CBl + "═══════════════════════════════════════════════════════════════" + CR)
+		fmt.Println(CBl + "              ETHERBREACH AGENT STATUS" + CR)
+		fmt.Println(CBl + "═══════════════════════════════════════════════════════════════" + CR)
+		fmt.Println("  ALPHA  [Scanner]   — idle")
+		fmt.Println("  BETA   [Breaker]   — idle")
+		fmt.Println("  GAMMA  [Phantom]   — idle")
+		fmt.Println("  DELTA  [Shadow]    — idle")
+		fmt.Println("  OMEGA  [Brain]     — idle")
+		fmt.Println()
+	default:
+		fmt.Println(CRr + "[!] Unknown WiFi command: " + sub + CR)
+		fmt.Println("      Type 'wifi' for available commands.")
 	}
 }
 

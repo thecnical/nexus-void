@@ -43,6 +43,22 @@ var externalTools = []ToolDefinition{
 	{Name: "aircrack-ng", Description: "Wireless auditing", Category: "network", CheckCommand: "aircrack-ng --version", InstallMethods: []InstallMethod{{Type: "apt", Command: "aircrack-ng", Priority: 1}}},
 	{Name: "reaver", Description: "WPS attack tool", Category: "network", CheckCommand: "reaver -h", InstallMethods: []InstallMethod{{Type: "apt", Command: "reaver", Priority: 1}}},
 	{Name: "wifite", Description: "Automated wireless auditor", Category: "network", CheckCommand: "wifite --help", InstallMethods: []InstallMethod{{Type: "apt", Command: "wifite", Priority: 1}}},
+	// ETHERBREACH WiFi Arsenal
+	{Name: "macchanger", Description: "MAC address randomization", Category: "network", CheckCommand: "macchanger --version", InstallMethods: []InstallMethod{{Type: "apt", Command: "macchanger", Priority: 1}}},
+	{Name: "mdk4", Description: "Advanced WiFi testing (deauth/beacon/probe)", Category: "network", CheckCommand: "mdk4 --help", InstallMethods: []InstallMethod{{Type: "git_build", Command: "https://github.com/aircrack-ng/mdk4.git,make", Priority: 1}}},
+	{Name: "bettercap", Description: "Modern MITM and packet sniffing", Category: "network", CheckCommand: "bettercap --version", InstallMethods: []InstallMethod{{Type: "go_install", Command: "github.com/bettercap/bettercap@latest", Priority: 1}}},
+	{Name: "hcxdumptool", Description: "PMKID capture tool", Category: "network", CheckCommand: "hcxdumptool --version", InstallMethods: []InstallMethod{{Type: "git_build", Command: "https://github.com/ZerBea/hcxdumptool.git,make", Priority: 1}}},
+	{Name: "hcxtools", Description: "Hash conversion for hashcat", Category: "network", CheckCommand: "hcxpcapngtool --version", InstallMethods: []InstallMethod{{Type: "git_build", Command: "https://github.com/ZerBea/hcxtools.git,make", Priority: 1}}},
+	{Name: "bully", Description: "WPS alternative attack", Category: "network", CheckCommand: "bully --version", InstallMethods: []InstallMethod{{Type: "git_build", Command: "https://github.com/aanarchyy/bully.git,make", Priority: 1}}},
+	{Name: "pixiewps", Description: "WPS pixie dust offline attack", Category: "network", CheckCommand: "pixiewps --version", InstallMethods: []InstallMethod{{Type: "git_build", Command: "https://github.com/wiire-a/pixiewps.git,make", Priority: 1}}},
+	{Name: "ettercap", Description: "ARP spoofing and MITM", Category: "network", CheckCommand: "ettercap --version", InstallMethods: []InstallMethod{{Type: "apt", Command: "ettercap-text-only", Priority: 1}}},
+	{Name: "dnsmasq", Description: "DNS/DHCP for evil twin", Category: "network", CheckCommand: "dnsmasq --version", InstallMethods: []InstallMethod{{Type: "apt", Command: "dnsmasq", Priority: 1}}},
+	{Name: "hostapd", Description: "Rogue AP hosting", Category: "network", CheckCommand: "hostapd --version", InstallMethods: []InstallMethod{{Type: "apt", Command: "hostapd", Priority: 1}}},
+	{Name: "wifiphisher", Description: "Automated evil twin + karma + phishing", Category: "network", CheckCommand: "wifiphisher --version", InstallMethods: []InstallMethod{{Type: "git_pip", Command: "https://github.com/wifiphisher/wifiphisher.git", Priority: 1}}},
+	{Name: "fluxion", Description: "Evil twin + captive portal automation", Category: "network", CheckCommand: "fluxion --help", InstallMethods: []InstallMethod{{Type: "git_clone", Command: "https://github.com/FluxionNetwork/fluxion.git", Priority: 1}}},
+	{Name: "airgeddon", Description: "Multi-attack WiFi framework", Category: "network", CheckCommand: "airgeddon --help", InstallMethods: []InstallMethod{{Type: "git_clone", Command: "https://github.com/v1s1t0r1sh3r3/airgeddon.git", Priority: 1}}},
+	{Name: "mitmproxy", Description: "Transparent HTTP/HTTPS proxy", Category: "network", CheckCommand: "mitmproxy --version", InstallMethods: []InstallMethod{{Type: "pip", Command: "mitmproxy", Priority: 1}}},
+	{Name: "scapy", Description: "Python packet crafting", Category: "network", CheckCommand: "python3 -c 'import scapy'", InstallMethods: []InstallMethod{{Type: "pip", Command: "scapy", Priority: 1}}},
 	{Name: "netdiscover", Description: "Network discovery", Category: "network", CheckCommand: "netdiscover -h", InstallMethods: []InstallMethod{{Type: "apt", Command: "netdiscover", Priority: 1}}},
 	{Name: "arp-scan", Description: "ARP scanner", Category: "network", CheckCommand: "arp-scan --version", InstallMethods: []InstallMethod{{Type: "apt", Command: "arp-scan", Priority: 1}}},
 	{Name: "enum4linux", Description: "SMB enumeration", Category: "network", CheckCommand: "enum4linux -h", InstallMethods: []InstallMethod{{Type: "apt", Command: "enum4linux", Priority: 1}}},
@@ -237,10 +253,22 @@ func executeInstallMethod(toolName string, method InstallMethod) error {
 
 func installViaGo(pkg string) error {
 	gobin := nvBin()
+	// Create a temp module directory to avoid "current directory is not in a module" error
+	tmpDir, err := os.MkdirTemp("", "nv-go-install-*")
+	if err != nil {
+		return fmt.Errorf("temp dir failed: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	// Initialize a dummy go.mod so go install works from this directory
+	os.WriteFile(filepath.Join(tmpDir, "go.mod"), []byte("module nvinstall\ngo 1.21\n"), 0644)
+
 	cmd := exec.Command("go", "install", pkg)
+	cmd.Dir = tmpDir
 	env := os.Environ()
 	env = append(env, "GOBIN="+gobin)
 	env = append(env, "GO111MODULE=on")
+	env = append(env, "GOPROXY=https://proxy.golang.org,direct")
 	cmd.Env = env
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -263,27 +291,44 @@ func installViaGo(pkg string) error {
 }
 
 func installViaPip(pkg string) error {
-	// Use a per-package virtualenv to bypass Kali's externally-managed-environment restriction
 	venvDir := filepath.Join(GetNVHome(), "venvs", pkg)
 	os.MkdirAll(venvDir, 0755)
 
-	// Create venv if not exists
 	pythonPath := filepath.Join(venvDir, "bin", "python3")
-	if _, err := os.Stat(pythonPath); os.IsNotExist(err) {
-		cmd := exec.Command("python3", "-m", "venv", venvDir)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		if err := cmd.Run(); err != nil {
-			return fmt.Errorf("venv creation failed: %v", err)
-		}
-	}
+	pipPath := filepath.Join(venvDir, "bin", "pip")
 
-	// Install package into venv
-	cmd := exec.Command(pythonPath, "-m", "pip", "install", "--upgrade", pkg)
+	// Create venv if not exists (always recreate to avoid corruption)
+	if _, err := os.Stat(pythonPath); err == nil {
+		os.RemoveAll(venvDir)
+	}
+	cmd := exec.Command("python3", "-m", "venv", venvDir)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("pip install failed: %v", err)
+		// Fallback: try with --without-pip and bootstrap
+		cmd = exec.Command("python3", "-m", "venv", "--without-pip", venvDir)
+		cmd.Run()
+		// Bootstrap pip
+		bootstrapPip(pythonPath)
+	}
+
+	// Ensure pip exists
+	if _, err := os.Stat(pipPath); os.IsNotExist(err) {
+		bootstrapPip(pythonPath)
+	}
+
+	// Install package into venv
+	cmd = exec.Command(pythonPath, "-m", "pip", "install", "--upgrade", pkg)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		// Fallback for Kali/Debian: use --break-system-packages
+		cmd = exec.Command(pythonPath, "-m", "pip", "install", "--upgrade", "--break-system-packages", pkg)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		if err := cmd.Run(); err != nil {
+			return fmt.Errorf("pip install failed: %v", err)
+		}
 	}
 
 	// Symlink all binaries from venv/bin to /usr/local/bin
@@ -294,7 +339,6 @@ func installViaPip(pkg string) error {
 			continue
 		}
 		name := entry.Name()
-		// Skip venv internals
 		if name == "python" || name == "python3" || name == "pip" || name == "pip3" || name == "activate" || strings.HasSuffix(name, ".pc") {
 			continue
 		}
@@ -305,6 +349,22 @@ func installViaPip(pkg string) error {
 		}
 	}
 	return nil
+}
+
+func bootstrapPip(pythonPath string) {
+	// Download and run get-pip.py to bootstrap pip in the venv
+	getPipURL := "https://bootstrap.pypa.io/get-pip.py"
+	getPipFile := filepath.Join(os.TempDir(), "get-pip.py")
+	resp, err := http.Get(getPipURL)
+	if err == nil {
+		defer resp.Body.Close()
+		f, _ := os.Create(getPipFile)
+		if f != nil {
+			io.Copy(f, resp.Body)
+			f.Close()
+			exec.Command(pythonPath, getPipFile).Run()
+		}
+	}
 }
 
 func installViaApt(pkg string) error {

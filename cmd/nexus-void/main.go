@@ -13,6 +13,7 @@ import (
 	"github.com/nexus-void/nexus-void/internal/tui"
 	"github.com/nexus-void/nexus-void/pkg/agents"
 	"github.com/nexus-void/nexus-void/pkg/brain"
+	"github.com/nexus-void/nexus-void/pkg/etherbreach"
 	"github.com/nexus-void/nexus-void/pkg/report"
 	"github.com/nexus-void/nexus-void/pkg/session"
 	"github.com/nexus-void/nexus-void/pkg/tools"
@@ -325,6 +326,73 @@ Commands inside chat:
 			return nil
 		},
 	})
+
+	// ETHERBREACH command - autonomous WiFi pentest
+	var ebFlags struct {
+		Interface string
+		Mode      string
+		Ghost     bool
+	}
+
+	ebCmd := &cobra.Command{
+		Use:   "etherbreach",
+		Short: "Launch ETHERBREACH autonomous WiFi penetration system",
+		Long: `ETHERBREACH — The Multi-Agent Autonomous WiFi Weapon
+
+5 AI Agents working together:
+  ALPHA  — Scanner (monitor mode, scan, firmware fingerprint)
+  BETA   — Breaker (WPS, PMKID, handshake capture, cracking)
+  GAMMA  — Phantom (Ghost Mode, Evil Twin, Karma Attack)
+  DELTA  — Shadow (Auto-Pivot, Internal Recon, Rogue Gateway)
+  OMEGA  — Brain (AI Decision, Orchestration, TUI, Telemetry)
+
+15 Real Attack Features:
+  1. AI Attack Chains      6. Predictive Cracking     11. Auto-Pivoting
+  2. Dynamic Wordlist      7. Packet Profiling        12. Rogue Gateway
+  3. Ghost Mode            8. Firmware Exploit      13. Cloud Sync
+  4. Natural Language CLI  9. AI Karma Attack         14. 3D Radar TUI
+  5. Evil Twin             10. WPA3 Downgrade        15. Omni-Dashboard
+
+Usage:
+  nexus-void etherbreach                    # Full autonomous attack
+  nexus-void etherbreach --mode radar       # Network discovery only
+  nexus-void etherbreach --mode war-room    # Active attack monitor
+  nexus-void etherbreach --ghost            # Enable stealth mode`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			iface := ebFlags.Interface
+			if iface == "" {
+				iface = "wlan0"
+			}
+
+			eb, err := etherbreach.New(iface)
+			if err != nil {
+				return err
+			}
+			defer eb.Close()
+
+			if ebFlags.Ghost {
+				eb.Bus.Broadcast(etherbreach.AgentMessage{
+					From: "OMEGA",
+					To:   "GAMMA",
+					Type: "GHOST_MODE_ON",
+				})
+			}
+
+			switch ebFlags.Mode {
+			case "radar":
+				eb.RunRadarMode()
+			case "war-room":
+				eb.RunWarRoom()
+			default:
+				eb.Start()
+			}
+			return nil
+		},
+	}
+	ebCmd.Flags().StringVarP(&ebFlags.Interface, "interface", "i", "wlan0", "WiFi interface")
+	ebCmd.Flags().StringVarP(&ebFlags.Mode, "mode", "m", "", "Mode: radar, war-room, neural")
+	ebCmd.Flags().BoolVar(&ebFlags.Ghost, "ghost", false, "Enable Ghost Mode (stealth)")
+	rootCmd.AddCommand(ebCmd)
 
 	// Uninstall command - remove everything
 	rootCmd.AddCommand(&cobra.Command{
