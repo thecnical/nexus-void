@@ -79,6 +79,9 @@ check_dependencies() {
     else
         echo -e "${GREEN}[+] Node.js found: $(node --version)${NC}"
     fi
+
+    # Refresh shell hash so newly installed binaries are found
+    hash -r 2>/dev/null || true
     
     echo -e "${GREEN}[+] All dependencies satisfied.${NC}"
     echo ""
@@ -177,9 +180,13 @@ EOF
 }
 
 install_tools() {
-    echo -e "${CYAN}[*] Installing external tools (optional)...${NC}"
-    echo -e "${YELLOW}[*} This may take several minutes. Run manually:${NC}"
-    echo -e "${YELLOW}    nexus-void arsenal install-all${NC}"
+    echo -e "${CYAN}[*] Installing all 47 external tools...${NC}"
+    hash -r 2>/dev/null || true
+    if [ -x "${BIN_DIR}/nexus-void" ]; then
+        ${BIN_DIR}/nexus-void arsenal install-all || echo -e "${YELLOW}[!} Some tools failed. Run manually: nexus-void arsenal install-all${NC}"
+    else
+        echo -e "${YELLOW}[!} nexus-void binary not found. Run after new shell: nexus-void arsenal install-all${NC}"
+    fi
     echo ""
 }
 
