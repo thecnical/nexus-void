@@ -326,6 +326,16 @@ Commands inside chat:
 		},
 	})
 
+	// Uninstall command - remove everything
+	rootCmd.AddCommand(&cobra.Command{
+		Use:   "uninstall",
+		Short: "Remove Nexus Void completely from this system",
+		Long:  `Removes /opt/nexus-void, systemd service, symlinks, and ~/.nexus-void`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runUninstall()
+		},
+	})
+
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)

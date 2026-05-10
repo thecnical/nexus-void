@@ -2,6 +2,8 @@ package main
 
 import (
 	"bufio"
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
@@ -28,6 +30,7 @@ type ChatSession struct {
 	reader       *bufio.Reader
 	voiceMode    bool
 	history      []string
+	backendURL   string
 }
 
 // Color codes
@@ -121,6 +124,12 @@ func NewChatSession(voice bool) *ChatSession {
 	b, _ := brain.NewBrain()
 	sm := session.NewManager("")
 	engine := agents.NewEngine(b, sm)
+
+	backend := os.Getenv("NEXUS_BACKEND")
+	if backend == "" {
+		backend = "https://nexus-void-backend.onrender.com"
+	}
+
 	return &ChatSession{
 		orchestrator: ai.NewOrchestrator(b, engine),
 		brain:        b,
@@ -128,6 +137,7 @@ func NewChatSession(voice bool) *ChatSession {
 		reader:       bufio.NewReader(os.Stdin),
 		voiceMode:    voice,
 		history:      []string{},
+		backendURL:   backend,
 	}
 }
 
@@ -173,12 +183,13 @@ func (cs *ChatSession) showWelcome() {
 }
 
 func (cs *ChatSession) startLocalServices() {
-	fmt.Println(CRg + "[+}" + CR + " Initializing local fullstack environment...")
+	fmt.Println(CRg + "[+}" + CR + " Initializing fullstack environment...")
 
 	if cs.isBackendRunning() {
-		fmt.Println(CRg + "[+}" + CR + " Backend already running on localhost:8080")
+		fmt.Println(CRg + "[+}" + CR + " Backend connected: " + cs.backendURL)
 	} else {
-		cs.startBackend()
+		fmt.Println(CRy + "[!}" + CR + " Backend unreachable at " + cs.backendURL)
+		fmt.Println(CRy + "[!}" + CR + " Set local backend: export NEXUS_BACKEND=http://localhost:8080")
 	}
 
 	if cs.isDashboardRunning() {
@@ -191,8 +202,8 @@ func (cs *ChatSession) startLocalServices() {
 }
 
 func (cs *ChatSession) isBackendRunning() bool {
-	client := &http.Client{Timeout: 2 * time.Second}
-	resp, err := client.Get("http://localhost:8080/api/status")
+	client := &http.Client{Timeout: 5 * time.Second}
+	resp, err := client.Get(cs.backendURL + "/api/status")
 	if err != nil {
 		return false
 	}
@@ -211,64 +222,42 @@ func (cs *ChatSession) isDashboardRunning() bool {
 }
 
 func (cs *ChatSession) startBackend() {
-	// Priority 1: current dir backend/ (dev mode)
-	cwd, _ := os.Getwd()
-	devBackend := filepath.Join(cwd, "backend")
+	fmt.Println(CRg + "[+}" + CR + " Using cloud backend: " + cs.backendURL)
+}
 
-	// Priority 2: installed path /opt/nexus-void/backend
-	installBackend := "/opt/nexus-void/backend"
+// queryBackendChat sends user input to the backend AI chat endpoint
+func (cs *ChatSession) queryBackendChat(input string) (string, error) {
+	payload := map[string]string{"message": input, "target": cs.target}
+	data, _ := json.Marshal(payload)
 
-	// Priority 3: nexus-server in PATH
-	var backendDir, backendBin string
-	if _, err := os.Stat(devBackend); err == nil {
-		backendDir = devBackend
-		backendBin = filepath.Join(backendDir, "nexus-server")
-		if os.PathSeparator == '\\' {
-			backendBin += ".exe"
-		}
-	} else if _, err := os.Stat(installBackend); err == nil {
-		backendDir = installBackend
-		backendBin = filepath.Join(backendDir, "nexus-server")
-	} else {
-		// Priority 4: Try systemd service
-		systemd := exec.Command("systemctl", "start", "nexus-void-backend")
-		if err := systemd.Run(); err == nil {
-			fmt.Println(CRg + "[+}" + CR + " Backend started via systemd.")
-			return
-		}
-		fmt.Println(CRy + "[!}" + CR + " Backend not found. Install with: sudo bash install.sh")
-		return
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Post(cs.backendURL+"/api/chat", "application/json", bytes.NewReader(data))
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("backend returned %d", resp.StatusCode)
 	}
 
-	var cmd *exec.Cmd
-	if _, err := os.Stat(backendBin); err == nil {
-		cmd = exec.Command(backendBin, "-addr", ":8080")
-		cmd.Dir = backendDir
-	} else {
-		fmt.Println(CRy+"[!}"+CR+" Backend binary not found at", backendBin)
-		return
+	var result struct {
+		Response string `json:"response"`
 	}
-
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	if err := cmd.Start(); err != nil {
-		fmt.Println(CRr+"[!}"+CR+" Failed to start backend:", err)
-		return
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return "", err
 	}
-
-	fmt.Println(CRg + "[+}" + CR + " Backend server starting on localhost:8080...")
-
-	for i := 0; i < 15; i++ {
-		time.Sleep(500 * time.Millisecond)
-		if cs.isBackendRunning() {
-			fmt.Println(CRg + "[+}" + CR + " Backend connected.")
-			return
-		}
-	}
-	fmt.Println(CRy + "[!}" + CR + " Backend start timeout. Check manually.")
+	return result.Response, nil
 }
 
 func (cs *ChatSession) startDashboard() {
+	// Check if npm is available
+	if _, err := exec.LookPath("npm"); err != nil {
+		fmt.Println(CRy + "[!}" + CR + " Node.js/npm not found. Dashboard skipped.")
+		fmt.Println(CRy + "[!}" + CR + " Install: sudo apt update && sudo apt install -y nodejs npm")
+		return
+	}
+
 	// Priority 1: current dir dashboard/ (dev mode)
 	cwd, _ := os.Getwd()
 	devDashboard := filepath.Join(cwd, "dashboard")
@@ -282,7 +271,7 @@ func (cs *ChatSession) startDashboard() {
 	} else if _, err := os.Stat(installDashboard); err == nil {
 		dashboardDir = installDashboard
 	} else {
-		fmt.Println(CRy + "[!}" + CR + " Dashboard not found.")
+		fmt.Println(CRy + "[!}" + CR + " Dashboard directory not found.")
 		return
 	}
 
@@ -435,6 +424,14 @@ func (cs *ChatSession) handleInput(input string) {
 
 // aiChatResponse handles natural language conversation with the AI
 func (cs *ChatSession) aiChatResponse(input string) {
+	// Try cloud backend AI first
+	if resp, err := cs.queryBackendChat(input); err == nil && resp != "" {
+		fmt.Println()
+		fmt.Println(CRc + "[AI] " + CRw + resp + CR)
+		fmt.Println()
+		return
+	}
+
 	lower := strings.ToLower(input)
 
 	// Self-introduction patterns
