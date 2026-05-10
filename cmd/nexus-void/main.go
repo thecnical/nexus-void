@@ -12,6 +12,7 @@ import (
 	"github.com/nexus-void/nexus-void/internal/installer"
 	"github.com/nexus-void/nexus-void/internal/tui"
 	"github.com/nexus-void/nexus-void/pkg/agents"
+	"github.com/nexus-void/nexus-void/pkg/apibreach"
 	"github.com/nexus-void/nexus-void/pkg/brain"
 	"github.com/nexus-void/nexus-void/pkg/cloudbreach"
 	"github.com/nexus-void/nexus-void/pkg/cryptobreach"
@@ -22,6 +23,7 @@ import (
 	"github.com/nexus-void/nexus-void/pkg/report"
 	"github.com/nexus-void/nexus-void/pkg/session"
 	"github.com/nexus-void/nexus-void/pkg/tools"
+	"github.com/nexus-void/nexus-void/pkg/webbreach"
 	"github.com/spf13/cobra"
 )
 
@@ -609,6 +611,74 @@ Usage:
 	clbCmd.Flags().StringVarP(&clbFlags.Provider, "provider", "p", "", "Cloud provider: aws, azure, gcp, all")
 	clbCmd.Flags().StringVarP(&clbFlags.Mode, "mode", "m", "", "Mode: scan, iam, buckets, containers, lambda")
 	rootCmd.AddCommand(clbCmd)
+
+	// WEBBREACH command - web application attacks
+	var wbFlags struct {
+		URL  string
+		Mode string
+	}
+	webCmd := &cobra.Command{
+		Use:   "webbreach",
+		Short: "Launch WEBBREACH web application attack system",
+		Long: `WEBBREACH — Web Application Attack Weapon
+
+5 AI Agents: CRAWLER, XSS-HUNTER, SQLI-PHANTOM, IDOR-BREAKER, CSRF-DEMON
+
+Usage:
+  nexus-void webbreach --url https://target.com --mode crawl
+  nexus-void webbreach --url https://target.com --mode xss`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			wb := webbreach.New()
+			defer wb.Close()
+			url := wbFlags.URL
+			if url == "" && len(args) > 0 {
+				url = args[0]
+			}
+			if url == "" {
+				fmt.Println("[!] Usage: nexus-void webbreach --url <target>")
+				return nil
+			}
+			wb.Start(url)
+			return nil
+		},
+	}
+	webCmd.Flags().StringVarP(&wbFlags.URL, "url", "u", "", "Target URL")
+	webCmd.Flags().StringVarP(&wbFlags.Mode, "mode", "m", "", "Mode: crawl, xss, sqli, idor, csrf")
+	rootCmd.AddCommand(webCmd)
+
+	// APIBREACH command - API security testing
+	var apiFlags struct {
+		URL  string
+		Mode string
+	}
+	apiCmd := &cobra.Command{
+		Use:   "apibreach",
+		Short: "Launch APIBREACH API security testing system",
+		Long: `APIBREACH — API Security Testing Weapon
+
+5 AI Agents: DISCOVER, AUTH-BYPASS, RATE-LIMIT, GRAPHQL-PHANTOM, GRPC-BREAKER
+
+Usage:
+  nexus-void apibreach --url https://api.target.com --mode discover
+  nexus-void apibreach --url https://api.target.com/graphql --mode graphql`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			ab := apibreach.New()
+			defer ab.Close()
+			url := apiFlags.URL
+			if url == "" && len(args) > 0 {
+				url = args[0]
+			}
+			if url == "" {
+				fmt.Println("[!] Usage: nexus-void apibreach --url <api-url>")
+				return nil
+			}
+			ab.Start(url)
+			return nil
+		},
+	}
+	apiCmd.Flags().StringVarP(&apiFlags.URL, "url", "u", "", "Target API URL")
+	apiCmd.Flags().StringVarP(&apiFlags.Mode, "mode", "m", "", "Mode: discover, auth, rate, graphql, grpc")
+	rootCmd.AddCommand(apiCmd)
 
 	// Uninstall command - remove everything
 	rootCmd.AddCommand(&cobra.Command{

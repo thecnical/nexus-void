@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"archive/zip"
 	"compress/gzip"
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -12,6 +13,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"time"
 )
 
 // ToolDefinition describes an external tool
@@ -628,6 +630,127 @@ func installViaGitBuild(toolName, url, buildCmd string) error {
 func installViaBinary(toolName, url string) error {
 	// For apt-based tools that have no other method
 	return installViaApt(toolName)
+}
+
+// InstallState tracks tool installation status
+type InstallState struct {
+	Name      string
+	Installed bool
+	Method    string
+	Error     string
+	Attempts  int
+}
+
+var installLog = make(map[string]*InstallState)
+
+// GetInstallLog returns the full installation state
+func GetInstallLog() map[string]*InstallState { return installLog }
+
+// MarkFailed records a tool failure for later retry
+func MarkFailed(toolName, method, err string) {
+	installLog[toolName] = &InstallState{
+		Name:      toolName,
+		Installed: false,
+		Method:    method,
+		Error:     err,
+		Attempts:  1,
+	}
+}
+
+// RetryFailed re-attempts all previously failed tools with alternate methods
+func RetryFailed() error {
+	var failed []string
+	for name, state := range installLog {
+		if !state.Installed && state.Attempts < 3 {
+			failed = append(failed, name)
+		}
+	}
+	if len(failed) == 0 {
+		fmt.Println("[+] No failed tools to retry")
+		return nil
+	}
+	fmt.Printf("[*] Retrying %d failed tools...\n", len(failed))
+	for _, name := range failed {
+		state := installLog[name]
+		state.Attempts++
+		fmt.Printf("[*] Retry %d/%d for %s...\n", state.Attempts, 3, name)
+		if err := InstallTool(name); err != nil {
+			state.Error = err.Error()
+			fmt.Printf("  [FAIL] %s still failing: %v\n", name, err)
+		} else {
+			state.Installed = true
+			fmt.Printf("  [OK] %s fixed on retry!\n", name)
+		}
+	}
+	return nil
+}
+
+// ToolExecutor gives agents the power to run installed tools
+type ToolExecutor struct {
+	envPath string
+}
+
+func NewToolExecutor() *ToolExecutor {
+	return &ToolExecutor{envPath: os.Getenv("PATH")}
+}
+
+// Run executes a tool with arguments, finding it via PATH, venv, or external_tools
+func (e *ToolExecutor) Run(toolName string, args ...string) ([]byte, error) {
+	// 1. Try PATH
+	if path, err := exec.LookPath(toolName); err == nil {
+		cmd := exec.Command(path, args...)
+		cmd.Env = append(os.Environ(), "PATH="+e.envPath)
+		return cmd.CombinedOutput()
+	}
+
+	// 2. Try venv bin
+	venvBin := filepath.Join(GetNVHome(), "venvs", toolName, "bin", toolName)
+	if _, err := os.Stat(venvBin); err == nil {
+		pythonPath := filepath.Join(GetNVHome(), "venvs", toolName, "bin", "python3")
+		cmd := exec.Command(pythonPath, append([]string{venvBin}, args...)...)
+		return cmd.CombinedOutput()
+	}
+
+	// 3. Try external_tools
+	extDir := filepath.Join(GetNVHome(), "external_tools", toolName)
+	if info, err := os.Stat(extDir); err == nil && info.IsDir() {
+		// Check for wrapper or main script
+		for _, candidate := range []string{toolName, toolName + ".py", "main.py", "run.py", "cli.py"} {
+			p := filepath.Join(extDir, candidate)
+			if _, err := os.Stat(p); err == nil {
+				pythonPath := filepath.Join(GetNVHome(), "venvs", toolName, "bin", "python3")
+				if _, err := os.Stat(pythonPath); err != nil {
+					pythonPath = "python3"
+				}
+				cmd := exec.Command(pythonPath, append([]string{p}, args...)...)
+				return cmd.CombinedOutput()
+			}
+		}
+	}
+
+	// 4. Try nvBin
+	nvBinPath := filepath.Join(nvBin(), toolName)
+	if runtime.GOOS == "windows" {
+		nvBinPath += ".exe"
+	}
+	if _, err := os.Stat(nvBinPath); err == nil {
+		cmd := exec.Command(nvBinPath, args...)
+		return cmd.CombinedOutput()
+	}
+
+	return nil, fmt.Errorf("tool %s not found anywhere (PATH, venv, external_tools, nvBin)", toolName)
+}
+
+// RunWithTimeout executes a tool with a timeout
+func (e *ToolExecutor) RunWithTimeout(timeout time.Duration, toolName string, args ...string) ([]byte, error) {
+	if path, err := exec.LookPath(toolName); err == nil {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+		cmd := exec.CommandContext(ctx, path, args...)
+		cmd.Env = append(os.Environ(), "PATH="+e.envPath)
+		return cmd.CombinedOutput()
+	}
+	return e.Run(toolName, args...)
 }
 
 func GetToolPath(toolName string) string {

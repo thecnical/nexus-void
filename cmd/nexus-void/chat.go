@@ -15,6 +15,7 @@ import (
 
 	"github.com/nexus-void/nexus-void/pkg/agents"
 	"github.com/nexus-void/nexus-void/pkg/ai"
+	"github.com/nexus-void/nexus-void/pkg/apibreach"
 	"github.com/nexus-void/nexus-void/pkg/brain"
 	"github.com/nexus-void/nexus-void/pkg/cloudbreach"
 	"github.com/nexus-void/nexus-void/pkg/cryptobreach"
@@ -24,6 +25,7 @@ import (
 	"github.com/nexus-void/nexus-void/pkg/netbreach"
 	"github.com/nexus-void/nexus-void/pkg/osintbreach"
 	"github.com/nexus-void/nexus-void/pkg/session"
+	"github.com/nexus-void/nexus-void/pkg/webbreach"
 )
 
 // ChatSession is the AI-driven autonomous attack terminal
@@ -415,6 +417,10 @@ func (cs *ChatSession) handleInput(input string) {
 		cs.handleCryptoCommand(parts)
 	case "cloud":
 		cs.handleCloudCommand(parts)
+	case "web":
+		cs.handleWebCommand(parts)
+	case "api":
+		cs.handleAPICommand(parts)
 	default:
 		// Check if input is a domain/IP (no command prefix)
 		if !strings.Contains(input, " ") && (strings.Contains(input, ".") || isIP(input)) {
@@ -1903,6 +1909,172 @@ func (cs *ChatSession) handleCloudCommand(parts []string) {
 	default:
 		fmt.Println(CRr + "[!] Unknown cloud command: " + sub + CR)
 		fmt.Println("      Type 'cloud' for available commands.")
+	}
+}
+
+func (cs *ChatSession) handleWebCommand(parts []string) {
+	if len(parts) < 2 {
+		fmt.Println(CBl + "═══════════════════════════════════════════════════════════════" + CR)
+		fmt.Println(CBl + "              WEBBREACH COMMANDS" + CR)
+		fmt.Println(CBl + "═══════════════════════════════════════════════════════════════" + CR)
+		fmt.Println("  web crawl <url>              Crawl & map endpoints")
+		fmt.Println("  web xss <url>                XSS scan")
+		fmt.Println("  web sqli <url>               SQL injection scan")
+		fmt.Println("  web idor <url>               IDOR test")
+		fmt.Println("  web csrf <url>               CSRF test")
+		fmt.Println("  web status                   Show agent status")
+		fmt.Println()
+		return
+	}
+	sub := strings.ToLower(parts[1])
+	switch sub {
+	case "crawl":
+		if len(parts) < 3 {
+			fmt.Println(CRr + "[!] Usage: web crawl <url>" + CR)
+			return
+		}
+		url := parts[2]
+		fmt.Printf(CRg+"[WEBBREACH]"+CR+" Crawl: %s\n", url)
+		wb := webbreach.New()
+		wb.Crawl(url)
+		wb.Close()
+	case "xss":
+		if len(parts) < 3 {
+			fmt.Println(CRr + "[!] Usage: web xss <url>" + CR)
+			return
+		}
+		url := parts[2]
+		fmt.Printf(CRg+"[WEBBREACH]"+CR+" XSS: %s\n", url)
+		wb := webbreach.New()
+		wb.XSSScan(url)
+		wb.Close()
+	case "sqli":
+		if len(parts) < 3 {
+			fmt.Println(CRr + "[!] Usage: web sqli <url>" + CR)
+			return
+		}
+		url := parts[2]
+		fmt.Printf(CRg+"[WEBBREACH]"+CR+" SQLi: %s\n", url)
+		wb := webbreach.New()
+		wb.SQLiScan(url)
+		wb.Close()
+	case "idor":
+		if len(parts) < 3 {
+			fmt.Println(CRr + "[!] Usage: web idor <url>" + CR)
+			return
+		}
+		url := parts[2]
+		fmt.Printf(CRg+"[WEBBREACH]"+CR+" IDOR: %s\n", url)
+		wb := webbreach.New()
+		wb.IDORScan(url)
+		wb.Close()
+	case "csrf":
+		if len(parts) < 3 {
+			fmt.Println(CRr + "[!] Usage: web csrf <url>" + CR)
+			return
+		}
+		url := parts[2]
+		fmt.Printf(CRg+"[WEBBREACH]"+CR+" CSRF: %s\n", url)
+		wb := webbreach.New()
+		wb.CSRFScan(url)
+		wb.Close()
+	case "status":
+		fmt.Println(CBl + "═══════════════════════════════════════════════════════════════" + CR)
+		fmt.Println(CBl + "              WEBBREACH AGENT STATUS" + CR)
+		fmt.Println(CBl + "═══════════════════════════════════════════════════════════════" + CR)
+		fmt.Println("  CRAWLER      [Map]     — idle")
+		fmt.Println("  XSS-HUNTER   [XSS]     — idle")
+		fmt.Println("  SQLI-PHANTOM [SQLi]    — idle")
+		fmt.Println("  IDOR-BREAKER [IDOR]    — idle")
+		fmt.Println("  CSRF-DEMON   [CSRF]    — idle")
+		fmt.Println("  OMEGA        [Brain]    — idle")
+		fmt.Println()
+	default:
+		fmt.Println(CRr + "[!] Unknown web command: " + sub + CR)
+		fmt.Println("      Type 'web' for available commands.")
+	}
+}
+
+func (cs *ChatSession) handleAPICommand(parts []string) {
+	if len(parts) < 2 {
+		fmt.Println(CBl + "═══════════════════════════════════════════════════════════════" + CR)
+		fmt.Println(CBl + "              APIBREACH COMMANDS" + CR)
+		fmt.Println(CBl + "═══════════════════════════════════════════════════════════════" + CR)
+		fmt.Println("  api discover <url>         API endpoint discovery")
+		fmt.Println("  api auth <url>               Auth bypass test")
+		fmt.Println("  api rate <url>               Rate limit test")
+		fmt.Println("  api graphql <url>            GraphQL injection")
+		fmt.Println("  api grpc <url>               gRPC probe")
+		fmt.Println("  api status                   Show agent status")
+		fmt.Println()
+		return
+	}
+	sub := strings.ToLower(parts[1])
+	switch sub {
+	case "discover":
+		if len(parts) < 3 {
+			fmt.Println(CRr + "[!] Usage: api discover <url>" + CR)
+			return
+		}
+		url := parts[2]
+		fmt.Printf(CRg+"[APIBREACH]"+CR+" Discover: %s\n", url)
+		ab := apibreach.New()
+		ab.Discover(url)
+		ab.Close()
+	case "auth":
+		if len(parts) < 3 {
+			fmt.Println(CRr + "[!] Usage: api auth <url>" + CR)
+			return
+		}
+		url := parts[2]
+		fmt.Printf(CRg+"[APIBREACH]"+CR+" Auth: %s\n", url)
+		ab := apibreach.New()
+		ab.AuthBypass(url)
+		ab.Close()
+	case "rate":
+		if len(parts) < 3 {
+			fmt.Println(CRr + "[!] Usage: api rate <url>" + CR)
+			return
+		}
+		url := parts[2]
+		fmt.Printf(CRg+"[APIBREACH]"+CR+" Rate: %s\n", url)
+		ab := apibreach.New()
+		ab.RateLimit(url)
+		ab.Close()
+	case "graphql":
+		if len(parts) < 3 {
+			fmt.Println(CRr + "[!] Usage: api graphql <url>" + CR)
+			return
+		}
+		url := parts[2]
+		fmt.Printf(CRg+"[APIBREACH]"+CR+" GraphQL: %s\n", url)
+		ab := apibreach.New()
+		ab.GraphQL(url)
+		ab.Close()
+	case "grpc":
+		if len(parts) < 3 {
+			fmt.Println(CRr + "[!] Usage: api grpc <url>" + CR)
+			return
+		}
+		url := parts[2]
+		fmt.Printf(CRg+"[APIBREACH]"+CR+" GRPC: %s\n", url)
+		ab := apibreach.New()
+		ab.GRPC(url)
+		ab.Close()
+	case "status":
+		fmt.Println(CBl + "═══════════════════════════════════════════════════════════════" + CR)
+		fmt.Println(CBl + "              APIBREACH AGENT STATUS" + CR)
+		fmt.Println(CBl + "═══════════════════════════════════════════════════════════════" + CR)
+		fmt.Println("  DISCOVER        [Map]       — idle")
+		fmt.Println("  AUTH-BYPASS     [Auth]      — idle")
+		fmt.Println("  RATE-LIMIT      [Throttle]  — idle")
+		fmt.Println("  GRAPHQL-PHANTOM [GraphQL]   — idle")
+		fmt.Println("  GRPC-BREAKER    [gRPC]      — idle")
+		fmt.Println("  OMEGA           [Brain]     — idle")
+		fmt.Println()
+	default:
+		fmt.Println(CRr + "[!] Unknown api command: " + sub + CR)
+		fmt.Println("      Type 'api' for available commands.")
 	}
 }
 

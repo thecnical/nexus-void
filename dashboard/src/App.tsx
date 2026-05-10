@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Terminal, Shield, Activity, Zap, Brain, Radio, ScanLine, Target, Globe, Cpu, Bug, Sword, Eye, Lock, Server, AlertTriangle, Crosshair } from 'lucide-react';
+import { Terminal, Shield, Activity, Zap, Brain, Radio, ScanLine, Target, Globe, Cpu, Bug, Sword, Eye, Lock, Server, AlertTriangle, Crosshair, Smartphone, Network, Cloud } from 'lucide-react';
 import Dashboard from './components/Dashboard';
 import LiveFeed from './components/LiveFeed';
 import StatsPanel from './components/StatsPanel';
 import AgentPanel from './components/AgentPanel';
+import WeaponSystemPanel from './components/WeaponSystemPanel';
 import { useWebSocket } from './hooks/useWebSocket';
 
 export interface AgentStatus {
@@ -48,12 +49,57 @@ const initialState: NexusState = {
   exploits: 0,
   evolutions: 0,
   agents: [
-    { name: 'RECON-OMEGA', status: 'idle', output: [], progress: 0 },
-    { name: 'VULN-SENTINEL', status: 'idle', output: [], progress: 0 },
-    { name: 'EXPLOIT-APOCALYPSE', status: 'idle', output: [], progress: 0 },
-    { name: 'PERSISTENCE-DAEMON', status: 'idle', output: [], progress: 0 },
-    { name: 'SHIELD-BREAKER', status: 'idle', output: [], progress: 0 },
-    { name: 'C2-NEXUS', status: 'idle', output: [], progress: 0 },
+    // ETHERBREACH
+    { name: 'WIFI-ALPHA', status: 'idle', output: [], progress: 0 },
+    { name: 'WIFI-BETA', status: 'idle', output: [], progress: 0 },
+    { name: 'WIFI-GAMMA', status: 'idle', output: [], progress: 0 },
+    // MOBILEBREACH
+    { name: 'MOBILE-SCANNER', status: 'idle', output: [], progress: 0 },
+    { name: 'APK-DECOMPILER', status: 'idle', output: [], progress: 0 },
+    { name: 'FRIDA-INJECTOR', status: 'idle', output: [], progress: 0 },
+    // OSINTBREACH
+    { name: 'OSINT-ALPHA', status: 'idle', output: [], progress: 0 },
+    { name: 'OSINT-BETA', status: 'idle', output: [], progress: 0 },
+    { name: 'OSINT-GAMMA', status: 'idle', output: [], progress: 0 },
+    // NETBREACH
+    { name: 'INFECT', status: 'idle', output: [], progress: 0 },
+    { name: 'PIVOT', status: 'idle', output: [], progress: 0 },
+    { name: 'EXTRACT', status: 'idle', output: [], progress: 0 },
+    { name: 'AD-PHANTOM', status: 'idle', output: [], progress: 0 },
+    { name: 'C2-CONTROL', status: 'idle', output: [], progress: 0 },
+    // CRYPTOBREACH
+    { name: 'HASH-BREAKER', status: 'idle', output: [], progress: 0 },
+    { name: 'CERT-HUNTER', status: 'idle', output: [], progress: 0 },
+    { name: 'TLS-PHANTOM', status: 'idle', output: [], progress: 0 },
+    { name: 'KEY-EXTRACT', status: 'idle', output: [], progress: 0 },
+    { name: 'QUANTUM-SHADOW', status: 'idle', output: [], progress: 0 },
+    // CLOUDBREACH
+    { name: 'CLOUD-SCANNER', status: 'idle', output: [], progress: 0 },
+    { name: 'IAM-ESCALATOR', status: 'idle', output: [], progress: 0 },
+    { name: 'BUCKET-RAIDER', status: 'idle', output: [], progress: 0 },
+    { name: 'CONTAINER-BREAKER', status: 'idle', output: [], progress: 0 },
+    { name: 'LAMBDA-PHANTOM', status: 'idle', output: [], progress: 0 },
+    // WEBBREACH
+    { name: 'CRAWLER', status: 'idle', output: [], progress: 0 },
+    { name: 'XSS-HUNTER', status: 'idle', output: [], progress: 0 },
+    { name: 'SQLI-PHANTOM', status: 'idle', output: [], progress: 0 },
+    { name: 'IDOR-BREAKER', status: 'idle', output: [], progress: 0 },
+    { name: 'CSRF-DEMON', status: 'idle', output: [], progress: 0 },
+    // APIBREACH
+    { name: 'DISCOVER', status: 'idle', output: [], progress: 0 },
+    { name: 'AUTH-BYPASS', status: 'idle', output: [], progress: 0 },
+    { name: 'RATE-LIMIT', status: 'idle', output: [], progress: 0 },
+    { name: 'GRAPHQL-PHANTOM', status: 'idle', output: [], progress: 0 },
+    { name: 'GRPC-BREAKER', status: 'idle', output: [], progress: 0 },
+    // OMEGA brains
+    { name: 'ETHER-OMEGA', status: 'idle', output: [], progress: 0 },
+    { name: 'MOBILE-OMEGA', status: 'idle', output: [], progress: 0 },
+    { name: 'OSINT-OMEGA', status: 'idle', output: [], progress: 0 },
+    { name: 'NET-OMEGA', status: 'idle', output: [], progress: 0 },
+    { name: 'CRYPTO-OMEGA', status: 'idle', output: [], progress: 0 },
+    { name: 'CLOUD-OMEGA', status: 'idle', output: [], progress: 0 },
+    { name: 'WEB-OMEGA', status: 'idle', output: [], progress: 0 },
+    { name: 'API-OMEGA', status: 'idle', output: [], progress: 0 },
   ],
   messages: [],
   clients: 0,
@@ -66,7 +112,7 @@ const initialState: NexusState = {
 
 function App() {
   const [state, setState] = useState<NexusState>(initialState);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'agents' | 'feed'>('dashboard');
+  const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [scanTarget, setScanTarget] = useState('');
   const [scanning, setScanning] = useState(false);
 
@@ -239,24 +285,25 @@ function App() {
         </div>
         
         <nav style={styles.nav}>
-          <button
-            style={styles.navButton(activeTab === 'dashboard')}
-            onClick={() => setActiveTab('dashboard')}
-          >
-            <Activity size={16} /> Dashboard
-          </button>
-          <button
-            style={styles.navButton(activeTab === 'agents')}
-            onClick={() => setActiveTab('agents')}
-          >
-            <Brain size={16} /> Agents
-          </button>
-          <button
-            style={styles.navButton(activeTab === 'feed')}
-            onClick={() => setActiveTab('feed')}
-          >
-            <Terminal size={16} /> Live Feed
-          </button>
+          {['dashboard','ether','mobile','osint','net','crypto','cloud','web','api','agents','feed'].map(tab => (
+            <button
+              key={tab}
+              style={styles.navButton(activeTab === tab)}
+              onClick={() => setActiveTab(tab)}
+            >
+              {tab === 'dashboard' && <><Activity size={14}/> Overview</>}
+              {tab === 'ether' && <><Zap size={14}/> Ether</>}
+              {tab === 'mobile' && <><Smartphone size={14}/> Mobile</>}
+              {tab === 'osint' && <><Eye size={14}/> OSINT</>}
+              {tab === 'net' && <><Network size={14}/> Net</>}
+              {tab === 'crypto' && <><Lock size={14}/> Crypto</>}
+              {tab === 'cloud' && <><Cloud size={14}/> Cloud</>}
+              {tab === 'web' && <><Globe size={14}/> Web</>}
+              {tab === 'api' && <><Server size={14}/> API</>}
+              {tab === 'agents' && <><Brain size={14}/> Agents</>}
+              {tab === 'feed' && <><Terminal size={14}/> Feed</>}
+            </button>
+          ))}
         </nav>
 
         <div style={styles.connectionStatus}>
@@ -290,6 +337,21 @@ function App() {
         {activeTab === 'dashboard' && <Dashboard state={state} />}
         {activeTab === 'agents' && <AgentPanel agents={state.agents} />}
         {activeTab === 'feed' && <LiveFeed messages={state.messages} />}
+        {['ether','mobile','osint','net','crypto','cloud','web','api'].includes(activeTab) && (
+          <WeaponSystemPanel system={activeTab} agents={state.agents.filter(a => {
+            const map: Record<string, string[]> = {
+              ether: ['WIFI-','ETHER-OMEGA'],
+              mobile: ['MOBILE-','APK-','FRIDA-','MOBILE-OMEGA'],
+              osint: ['OSINT-','OSINT-OMEGA'],
+              net: ['INFECT','PIVOT','EXTRACT','AD-PHANTOM','C2-CONTROL','NET-OMEGA'],
+              crypto: ['HASH-BREAKER','CERT-HUNTER','TLS-PHANTOM','KEY-EXTRACT','QUANTUM-SHADOW','CRYPTO-OMEGA'],
+              cloud: ['CLOUD-','IAM-','BUCKET-','CONTAINER-','LAMBDA-','CLOUD-OMEGA'],
+              web: ['CRAWLER','XSS-','SQLI-','IDOR-','CSRF-','WEB-OMEGA'],
+              api: ['DISCOVER','AUTH-','RATE-','GRAPHQL-','GRPC-','API-OMEGA'],
+            };
+            return map[activeTab]?.some(p => a.name.includes(p)) || false;
+          })} />
+        )}
       </main>
     </div>
   );
