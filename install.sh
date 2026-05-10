@@ -9,6 +9,7 @@ set -e
 
 NEXUS_VERSION="3.0.0"
 NEXUS_REPO="https://github.com/thecnical/nexus-void.git"
+BACKEND_REPO="https://github.com/mrgithacks/Nexus-Void-backend.git"
 INSTALL_DIR="/opt/nexus-void"
 BIN_DIR="/usr/local/bin"
 
@@ -91,10 +92,13 @@ install_nexus() {
     
     # Build main CLI
     echo -e "${CYAN}[*] Building Nexus Void CLI...${NC}"
-    go mod tidy
+    go work sync
     go build -ldflags="-s -w" -o nexus-void ./cmd/nexus-void
     
-    # Build backend server
+    # Clone and build backend from separate repo
+    echo -e "${CYAN}[*] Cloning backend server repository...${NC}"
+    git clone ${BACKEND_REPO} ${INSTALL_DIR}/backend
+    
     echo -e "${CYAN}[*] Building Nexus Void Backend Server...${NC}"
     cd ${INSTALL_DIR}/backend
     go mod tidy
