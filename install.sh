@@ -95,14 +95,22 @@ install_nexus() {
     go work sync
     go build -ldflags="-s -w" -o nexus-void ./cmd/nexus-void
     
+    # Remove go.work to prevent workspace interference with backend build
+    rm -f ${INSTALL_DIR}/go.work
+    
     # Clone and build backend from separate repo
     echo -e "${CYAN}[*] Cloning backend server repository...${NC}"
-    git clone ${BACKEND_REPO} ${INSTALL_DIR}/backend
+    if ! git clone ${BACKEND_REPO} ${INSTALL_DIR}/backend 2>/dev/null; then
+        echo -e "${RED}[!} Backend repo clone failed. If repo is private, run interactively:${NC}"
+        echo -e "${YELLOW}    export BACKEND_REPO=\"https://TOKEN@github.com/mrgithacks/Nexus-Void-backend.git\"${NC}"
+        echo -e "${YELLOW}    bash -c '\$(curl -fsSL https://raw.githubusercontent.com/thecnical/nexus-void/main/install.sh)'${NC}"
+        exit 1
+    fi
     
     echo -e "${CYAN}[*] Building Nexus Void Backend Server...${NC}"
     cd ${INSTALL_DIR}/backend
     go mod tidy
-    GOWORK=off go build -ldflags="-s -w" -o nexus-server ./cmd/server
+    go build -ldflags="-s -w" -o nexus-server ./cmd/server
     
     # Create symlinks
     echo -e "${CYAN}[*] Creating system links...${NC}"
