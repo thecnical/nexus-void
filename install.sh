@@ -102,7 +102,7 @@ install_nexus() {
     echo -e "${CYAN}[*] Building Nexus Void Backend Server...${NC}"
     cd ${INSTALL_DIR}/backend
     go mod tidy
-    go build -ldflags="-s -w" -o nexus-server ./cmd/server
+    GOWORK=off go build -ldflags="-s -w" -o nexus-server ./cmd/server
     
     # Create symlinks
     echo -e "${CYAN}[*] Creating system links...${NC}"
