@@ -18,6 +18,7 @@ import (
 	"github.com/nexus-void/nexus-void/pkg/brain"
 	"github.com/nexus-void/nexus-void/pkg/etherbreach"
 	"github.com/nexus-void/nexus-void/pkg/intel"
+	"github.com/nexus-void/nexus-void/pkg/mobilebreach"
 	"github.com/nexus-void/nexus-void/pkg/session"
 )
 
@@ -406,6 +407,8 @@ func (cs *ChatSession) handleInput(input string) {
 		}
 	case "wifi":
 		cs.handleWiFiCommand(parts)
+	case "mobile":
+		cs.handleMobileCommand(parts)
 	default:
 		// Check if input is a domain/IP (no command prefix)
 		if !strings.Contains(input, " ") && (strings.Contains(input, ".") || isIP(input)) {
@@ -1409,6 +1412,114 @@ func (cs *ChatSession) handleWiFiCommand(parts []string) {
 	default:
 		fmt.Println(CRr + "[!] Unknown WiFi command: " + sub + CR)
 		fmt.Println("      Type 'wifi' for available commands.")
+	}
+}
+
+func (cs *ChatSession) handleMobileCommand(parts []string) {
+	if len(parts) < 2 {
+		fmt.Println(CBl + "═══════════════════════════════════════════════════════════════" + CR)
+		fmt.Println(CBl + "              MOBILEBREACH COMMANDS" + CR)
+		fmt.Println(CBl + "═══════════════════════════════════════════════════════════════" + CR)
+		fmt.Println("  mobile apex apk <file>           Auto-MITM patch + install + Frida hook")
+		fmt.Println("  mobile ghost ios <bundle-id>     Decrypted IPA dump + keychain extract")
+		fmt.Println("  mobile lance api <url>           API recon + GraphQL map + JWT test")
+		fmt.Println("  mobile spectre imsi              IMSI catcher mode")
+		fmt.Println("  mobile spectre paging            Cellular paging attack")
+		fmt.Println("  mobile spectre esim              eSIM profile extraction")
+		fmt.Println("  mobile overmind <target>         Full AI autonomous chain")
+		fmt.Println("  mobile status                    Show mobile agent status")
+		fmt.Println()
+		return
+	}
+
+	sub := strings.ToLower(parts[1])
+	switch sub {
+	case "apex":
+		if len(parts) < 4 {
+			fmt.Println(CRr + "[!] Usage: mobile apex apk <file.apk>" + CR)
+			return
+		}
+		apk := parts[3]
+		fmt.Printf(CRg+"[MOBILEBREACH]"+CR+" APEX Android chain: %s\n", apk)
+		cs.narrate("APEX Android attack initiated on " + apk)
+		mb := mobilebreach.New()
+		mb.ScanAPK(apk)
+		mb.Close()
+
+	case "ghost":
+		if len(parts) < 4 {
+			fmt.Println(CRr + "[!] Usage: mobile ghost ios <bundle-id>" + CR)
+			return
+		}
+		bundle := parts[3]
+		fmt.Printf(CRg+"[MOBILEBREACH]"+CR+" GHOST iOS chain: %s\n", bundle)
+		cs.narrate("GHOST iOS attack initiated on " + bundle)
+		mb := mobilebreach.New()
+		mb.Bus.Broadcast(mobilebreach.AgentMessage{From: "OVERMIND", To: "GHOST", Type: "IPA_DUMP", Data: bundle})
+		mb.Close()
+
+	case "lance":
+		if len(parts) < 4 {
+			fmt.Println(CRr + "[!] Usage: mobile lance api <url>" + CR)
+			return
+		}
+		url := parts[3]
+		fmt.Printf(CRg+"[MOBILEBREACH]"+CR+" LANCE API chain: %s\n", url)
+		cs.narrate("LANCE API attack initiated on " + url)
+		mb := mobilebreach.New()
+		mb.ScanAPI(url)
+		mb.Close()
+
+	case "spectre":
+		if len(parts) < 3 {
+			fmt.Println(CRr + "[!] Usage: mobile spectre <imsi|paging|esim>" + CR)
+			return
+		}
+		mode := strings.ToLower(parts[2])
+		mb := mobilebreach.New()
+		switch mode {
+		case "imsi":
+			fmt.Println(CRg + "[MOBILEBREACH]" + CR + " SPECTRE IMSI catcher starting...")
+			cs.narrate("IMSI catcher mode activated.")
+			mb.StartIMSI()
+		case "paging":
+			fmt.Println(CRg + "[MOBILEBREACH]" + CR + " SPECTRE paging attack starting...")
+			cs.narrate("Cellular paging attack initiated.")
+			mb.StartPaging()
+		case "esim":
+			fmt.Println(CRg + "[MOBILEBREACH]" + CR + " SPECTRE eSIM extraction starting...")
+			cs.narrate("eSIM profile extraction initiated.")
+			mb.StartESIM()
+		default:
+			fmt.Println(CRr + "[!] Unknown spectre mode: " + mode + CR)
+		}
+		mb.Close()
+
+	case "overmind":
+		if len(parts) < 3 {
+			fmt.Println(CRr + "[!] Usage: mobile overmind <target>" + CR)
+			return
+		}
+		target := parts[2]
+		fmt.Printf(CRg+"[MOBILEBREACH]"+CR+" OVERMIND full autonomous chain: %s\n", target)
+		cs.narrate("OVERMIND AI orchestration started for " + target)
+		mb := mobilebreach.New()
+		mb.Bus.Broadcast(mobilebreach.AgentMessage{From: "CHAT", To: "OVERMIND", Type: "AUTO_ATTACK", Data: target})
+		mb.Close()
+
+	case "status":
+		fmt.Println(CBl + "═══════════════════════════════════════════════════════════════" + CR)
+		fmt.Println(CBl + "              MOBILEBREACH AGENT STATUS" + CR)
+		fmt.Println(CBl + "═══════════════════════════════════════════════════════════════" + CR)
+		fmt.Println("  APEX    [Android Rooter]  — idle")
+		fmt.Println("  GHOST   [iOS Phantom]     — idle")
+		fmt.Println("  LANCE   [API Breaker]     — idle")
+		fmt.Println("  SPECTRE [Baseband Hunter] — idle")
+		fmt.Println("  OVERMIND [AI Brain]      — idle")
+		fmt.Println()
+	default:
+		fmt.Println(CRr + "[!] Unknown mobile command: " + sub + CR)
+		fmt.Println("      Type 'mobile' for available commands.")
 	}
 }
 

@@ -14,6 +14,7 @@ import (
 	"github.com/nexus-void/nexus-void/pkg/agents"
 	"github.com/nexus-void/nexus-void/pkg/brain"
 	"github.com/nexus-void/nexus-void/pkg/etherbreach"
+	"github.com/nexus-void/nexus-void/pkg/mobilebreach"
 	"github.com/nexus-void/nexus-void/pkg/report"
 	"github.com/nexus-void/nexus-void/pkg/session"
 	"github.com/nexus-void/nexus-void/pkg/tools"
@@ -393,6 +394,63 @@ Usage:
 	ebCmd.Flags().StringVarP(&ebFlags.Mode, "mode", "m", "", "Mode: radar, war-room, neural")
 	ebCmd.Flags().BoolVar(&ebFlags.Ghost, "ghost", false, "Enable Ghost Mode (stealth)")
 	rootCmd.AddCommand(ebCmd)
+
+	// MOBILEBREACH command - autonomous mobile pentest
+	var mbFlags struct {
+		Target string
+		Mode   string
+	}
+
+	mbCmd := &cobra.Command{
+		Use:   "mobilebreach",
+		Short: "Launch MOBILEBREACH autonomous mobile penetration system",
+		Long: `MOBILEBREACH — Next-Gen Autonomous Mobile Weapon
+
+4 AI Agents working together:
+  APEX    — Android Rooter (APK reverse, Frida hook, ADB exploit, Drozer)
+  GHOST   — iOS Phantom (IPA dump, jailbreak bypass, keychain extract)
+  LANCE   — API Breaker (GraphQL map, JWT forge, MITM proxy, SDK poison)
+  SPECTRE — Baseband Hunter (5G rogue gNodeB, IMSI catcher, eSIM clone, paging)
+  OVERMIND — AI Brain (CVE chain orchestration, telemetry)
+
+15 Next-Gen Attack Features:
+  1. APK Auto-MITM Patch     6.  Decrypted IPA Dump      11. 5G Rogue gNodeB
+  2. Zero-Click Exploit      7.  Jailbreak Bypass        12. SUCI De-Concealment
+  3. Deep Link Hijacking     8.  Keychain Extraction     13. eSIM Profile Clone
+  4. Runtime Mass Hook       9.  GraphQL Deep Map        14. Cellular Paging Attack
+  5. ADB Post-Exploit        10. JWT Token Forge         15. AI Attack Chain
+
+Usage:
+  nexus-void mobilebreach --target apk:app.apk     # Android full chain
+  nexus-void mobilebreach --target ios:com.app     # iOS full chain
+  nexus-void mobilebreach --target api:api.com     # API recon + MITM
+  nexus-void mobilebreach --mode imsi              # IMSI catcher
+  nexus-void mobilebreach --mode esim              # eSIM extraction
+  nexus-void mobilebreach --mode paging            # Paging attack`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			mb := mobilebreach.New()
+			defer mb.Close()
+
+			switch mbFlags.Mode {
+			case "imsi":
+				mb.StartIMSI()
+			case "paging":
+				mb.StartPaging()
+			case "esim":
+				mb.StartESIM()
+			default:
+				if mbFlags.Target != "" {
+					mb.Start()
+				} else {
+					fmt.Println("[!] Set target: --target apk:file.apk / ios:bundle / api:url")
+				}
+			}
+			return nil
+		},
+	}
+	mbCmd.Flags().StringVarP(&mbFlags.Target, "target", "t", "", "Target: apk:file, ios:bundle, api:url")
+	mbCmd.Flags().StringVarP(&mbFlags.Mode, "mode", "m", "", "Mode: imsi, paging, esim")
+	rootCmd.AddCommand(mbCmd)
 
 	// Uninstall command - remove everything
 	rootCmd.AddCommand(&cobra.Command{
