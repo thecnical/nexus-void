@@ -13,8 +13,11 @@ import (
 	"github.com/nexus-void/nexus-void/internal/tui"
 	"github.com/nexus-void/nexus-void/pkg/agents"
 	"github.com/nexus-void/nexus-void/pkg/brain"
+	"github.com/nexus-void/nexus-void/pkg/cloudbreach"
+	"github.com/nexus-void/nexus-void/pkg/cryptobreach"
 	"github.com/nexus-void/nexus-void/pkg/etherbreach"
 	"github.com/nexus-void/nexus-void/pkg/mobilebreach"
+	"github.com/nexus-void/nexus-void/pkg/netbreach"
 	"github.com/nexus-void/nexus-void/pkg/osintbreach"
 	"github.com/nexus-void/nexus-void/pkg/report"
 	"github.com/nexus-void/nexus-void/pkg/session"
@@ -503,6 +506,109 @@ Usage:
 	obCmd.Flags().StringVarP(&obFlags.Domain, "domain", "d", "", "Target domain")
 	obCmd.Flags().StringVarP(&obFlags.Mode, "mode", "m", "", "Mode: recon, persona, vuln, supply, report")
 	rootCmd.AddCommand(obCmd)
+
+	// NETBREACH command - network post-exploitation
+	var nbFlags struct {
+		Target string
+		Mode   string
+	}
+	nbCmd := &cobra.Command{
+		Use:   "netbreach",
+		Short: "Launch NETBREACH network post-exploitation system",
+		Long: `NETBREACH — Network & Post-Exploitation Weapon
+
+5 AI Agents: INFECT, PIVOT, EXTRACT, AD-PHANTOM, C2-CONTROL
+
+Usage:
+  nexus-void netbreach --target 10.0.0.0/24 --mode recon
+  nexus-void netbreach --target 192.168.1.10 --mode pivot
+  nexus-void netbreach --target dc01.corp.local --mode ad`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			nb := netbreach.New()
+			defer nb.Close()
+			target := nbFlags.Target
+			if target == "" && len(args) > 0 {
+				target = args[0]
+			}
+			if target == "" {
+				fmt.Println("[!] Usage: nexus-void netbreach --target <ip/cidr/hostname>")
+				return nil
+			}
+			nb.Start(target)
+			return nil
+		},
+	}
+	nbCmd.Flags().StringVarP(&nbFlags.Target, "target", "t", "", "Target IP/CIDR/hostname")
+	nbCmd.Flags().StringVarP(&nbFlags.Mode, "mode", "m", "", "Mode: recon, pivot, extract, ad, c2")
+	rootCmd.AddCommand(nbCmd)
+
+	// CRYPTOBREACH command - cryptography attacks
+	var cbFlags struct {
+		Target string
+		Mode   string
+	}
+	cbCmd := &cobra.Command{
+		Use:   "cryptobreach",
+		Short: "Launch CRYPTOBREACH cryptographic attack system",
+		Long: `CRYPTOBREACH — Cryptography Attack Weapon
+
+5 AI Agents: HASH-BREAKER, CERT-HUNTER, TLS-PHANTOM, KEY-EXTRACT, QUANTUM-SHADOW
+
+Usage:
+  nexus-void cryptobreach --target hash.txt --mode crack
+  nexus-void cryptobreach --target https://site.com --mode tls`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cb := cryptobreach.New()
+			defer cb.Close()
+			target := cbFlags.Target
+			if target == "" && len(args) > 0 {
+				target = args[0]
+			}
+			if target == "" {
+				fmt.Println("[!] Usage: nexus-void cryptobreach --target <hash/url>")
+				return nil
+			}
+			cb.Start(target)
+			return nil
+		},
+	}
+	cbCmd.Flags().StringVarP(&cbFlags.Target, "target", "t", "", "Target hash or URL")
+	cbCmd.Flags().StringVarP(&cbFlags.Mode, "mode", "m", "", "Mode: crack, tls, cert, key, quantum")
+	rootCmd.AddCommand(cbCmd)
+
+	// CLOUDBREACH command - multi-cloud exploitation
+	var clbFlags struct {
+		Provider string
+		Mode     string
+	}
+	clbCmd := &cobra.Command{
+		Use:   "cloudbreach",
+		Short: "Launch CLOUDBREACH multi-cloud exploitation system",
+		Long: `CLOUDBREACH — Multi-Cloud Exploitation Weapon
+
+5 AI Agents: CLOUD-SCANNER, IAM-ESCALATOR, BUCKET-RAIDER, CONTAINER-BREAKER, LAMBDA-PHANTOM
+
+Usage:
+  nexus-void cloudbreach --provider aws --mode scan
+  nexus-void cloudbreach --provider all --mode buckets`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clb := cloudbreach.New()
+			defer clb.Close()
+			provider := clbFlags.Provider
+			if provider == "" && len(args) > 0 {
+				provider = args[0]
+			}
+			if provider == "" {
+				fmt.Println("[!] Usage: nexus-void cloudbreach --provider <aws/azure/gcp/all>")
+				return nil
+			}
+			clb.Start(provider)
+			return nil
+		},
+	}
+	clbCmd.Flags().StringVarP(&clbFlags.Provider, "provider", "p", "", "Cloud provider: aws, azure, gcp, all")
+	clbCmd.Flags().StringVarP(&clbFlags.Mode, "mode", "m", "", "Mode: scan, iam, buckets, containers, lambda")
+	rootCmd.AddCommand(clbCmd)
 
 	// Uninstall command - remove everything
 	rootCmd.AddCommand(&cobra.Command{

@@ -16,9 +16,12 @@ import (
 	"github.com/nexus-void/nexus-void/pkg/agents"
 	"github.com/nexus-void/nexus-void/pkg/ai"
 	"github.com/nexus-void/nexus-void/pkg/brain"
+	"github.com/nexus-void/nexus-void/pkg/cloudbreach"
+	"github.com/nexus-void/nexus-void/pkg/cryptobreach"
 	"github.com/nexus-void/nexus-void/pkg/etherbreach"
 	"github.com/nexus-void/nexus-void/pkg/intel"
 	"github.com/nexus-void/nexus-void/pkg/mobilebreach"
+	"github.com/nexus-void/nexus-void/pkg/netbreach"
 	"github.com/nexus-void/nexus-void/pkg/osintbreach"
 	"github.com/nexus-void/nexus-void/pkg/session"
 )
@@ -406,6 +409,12 @@ func (cs *ChatSession) handleInput(input string) {
 		cs.handleWiFiCommand(parts)
 	case "mobile":
 		cs.handleMobileCommand(parts)
+	case "net":
+		cs.handleNetCommand(parts)
+	case "crypto":
+		cs.handleCryptoCommand(parts)
+	case "cloud":
+		cs.handleCloudCommand(parts)
 	default:
 		// Check if input is a domain/IP (no command prefix)
 		if !strings.Contains(input, " ") && (strings.Contains(input, ".") || isIP(input)) {
@@ -1627,6 +1636,273 @@ func (cs *ChatSession) handleOsintCommand(parts []string) {
 	default:
 		fmt.Println(CRr + "[!] Unknown osint command: " + sub + CR)
 		fmt.Println("      Type 'osint' for available commands.")
+	}
+}
+
+func (cs *ChatSession) handleNetCommand(parts []string) {
+	if len(parts) < 2 {
+		fmt.Println(CBl + "═══════════════════════════════════════════════════════════════" + CR)
+		fmt.Println(CBl + "              NETBREACH COMMANDS" + CR)
+		fmt.Println(CBl + "═══════════════════════════════════════════════════════════════" + CR)
+		fmt.Println("  net recon <target>              Full network recon")
+		fmt.Println("  net pivot <target>              Lateral movement")
+		fmt.Println("  net extract <target>            Credential extraction")
+		fmt.Println("  net ad <domain>                 Active Directory attack")
+		fmt.Println("  net c2 <target>                 C2 deployment")
+		fmt.Println("  net status                      Show agent status")
+		fmt.Println()
+		return
+	}
+
+	sub := strings.ToLower(parts[1])
+	switch sub {
+	case "recon":
+		if len(parts) < 3 {
+			fmt.Println(CRr + "[!] Usage: net recon <target>" + CR)
+			return
+		}
+		target := parts[2]
+		fmt.Printf(CRg+"[NETBREACH]"+CR+" Recon: %s\n", target)
+		cs.narrate("NETBREACH recon initiated on " + target)
+		nb := netbreach.New()
+		nb.Recon(target)
+		nb.Close()
+	case "pivot":
+		if len(parts) < 3 {
+			fmt.Println(CRr + "[!] Usage: net pivot <target>" + CR)
+			return
+		}
+		target := parts[2]
+		fmt.Printf(CRg+"[NETBREACH]"+CR+" Pivot: %s\n", target)
+		cs.narrate("NETBREACH pivot started on " + target)
+		nb := netbreach.New()
+		nb.Pivot(target)
+		nb.Close()
+	case "extract":
+		if len(parts) < 3 {
+			fmt.Println(CRr + "[!] Usage: net extract <target>" + CR)
+			return
+		}
+		target := parts[2]
+		fmt.Printf(CRg+"[NETBREACH]"+CR+" Extract: %s\n", target)
+		cs.narrate("NETBREACH credential extraction on " + target)
+		nb := netbreach.New()
+		nb.Extract(target)
+		nb.Close()
+	case "ad":
+		if len(parts) < 3 {
+			fmt.Println(CRr + "[!] Usage: net ad <domain>" + CR)
+			return
+		}
+		domain := parts[2]
+		fmt.Printf(CRg+"[NETBREACH]"+CR+" AD Attack: %s\n", domain)
+		cs.narrate("NETBREACH AD attack on " + domain)
+		nb := netbreach.New()
+		nb.ADAttack(domain)
+		nb.Close()
+	case "c2":
+		if len(parts) < 3 {
+			fmt.Println(CRr + "[!] Usage: net c2 <target>" + CR)
+			return
+		}
+		target := parts[2]
+		fmt.Printf(CRg+"[NETBREACH]"+CR+" C2 Deploy: %s\n", target)
+		cs.narrate("NETBREACH C2 deployment on " + target)
+		nb := netbreach.New()
+		nb.C2Deploy(target)
+		nb.Close()
+	case "status":
+		fmt.Println(CBl + "═══════════════════════════════════════════════════════════════" + CR)
+		fmt.Println(CBl + "              NETBREACH AGENT STATUS" + CR)
+		fmt.Println(CBl + "═══════════════════════════════════════════════════════════════" + CR)
+		fmt.Println("  INFECT      [Payload]     — idle")
+		fmt.Println("  PIVOT       [Lateral]     — idle")
+		fmt.Println("  EXTRACT     [Creds]       — idle")
+		fmt.Println("  AD-PHANTOM  [AD Takeover] — idle")
+		fmt.Println("  C2-CONTROL  [C2/Persist]  — idle")
+		fmt.Println("  OMEGA       [Brain]       — idle")
+		fmt.Println()
+	default:
+		fmt.Println(CRr + "[!] Unknown net command: " + sub + CR)
+		fmt.Println("      Type 'net' for available commands.")
+	}
+}
+
+func (cs *ChatSession) handleCryptoCommand(parts []string) {
+	if len(parts) < 2 {
+		fmt.Println(CBl + "═══════════════════════════════════════════════════════════════" + CR)
+		fmt.Println(CBl + "              CRYPTOBREACH COMMANDS" + CR)
+		fmt.Println(CBl + "═══════════════════════════════════════════════════════════════" + CR)
+		fmt.Println("  crypto crack <hash>           Crack hash")
+		fmt.Println("  crypto tls <url>                TLS analysis")
+		fmt.Println("  crypto cert <url>               Certificate scan")
+		fmt.Println("  crypto key <file>               Key extraction")
+		fmt.Println("  crypto quantum <url>            Quantum vulnerability check")
+		fmt.Println("  crypto status                   Show agent status")
+		fmt.Println()
+		return
+	}
+
+	sub := strings.ToLower(parts[1])
+	switch sub {
+	case "crack":
+		if len(parts) < 3 {
+			fmt.Println(CRr + "[!] Usage: crypto crack <hash>" + CR)
+			return
+		}
+		hash := parts[2]
+		fmt.Printf(CRg+"[CRYPTOBREACH]"+CR+" Crack: %s\n", hash)
+		cs.narrate("CRYPTOBREACH hash cracking started")
+		cb := cryptobreach.New()
+		cb.CrackHash(hash)
+		cb.Close()
+	case "tls":
+		if len(parts) < 3 {
+			fmt.Println(CRr + "[!] Usage: crypto tls <url>" + CR)
+			return
+		}
+		url := parts[2]
+		fmt.Printf(CRg+"[CRYPTOBREACH]"+CR+" TLS: %s\n", url)
+		cs.narrate("CRYPTOBREACH TLS analysis on " + url)
+		cb := cryptobreach.New()
+		cb.AttackTLS(url)
+		cb.Close()
+	case "cert":
+		if len(parts) < 3 {
+			fmt.Println(CRr + "[!] Usage: crypto cert <url>" + CR)
+			return
+		}
+		url := parts[2]
+		fmt.Printf(CRg+"[CRYPTOBREACH]"+CR+" Cert: %s\n", url)
+		cs.narrate("CRYPTOBREACH certificate scan on " + url)
+		cb := cryptobreach.New()
+		cb.ScanCert(url)
+		cb.Close()
+	case "key":
+		if len(parts) < 3 {
+			fmt.Println(CRr + "[!] Usage: crypto key <file>" + CR)
+			return
+		}
+		file := parts[2]
+		fmt.Printf(CRg+"[CRYPTOBREACH]"+CR+" Key Extract: %s\n", file)
+		cs.narrate("CRYPTOBREACH key extraction on " + file)
+		cb := cryptobreach.New()
+		cb.ExtractKey(file)
+		cb.Close()
+	case "quantum":
+		if len(parts) < 3 {
+			fmt.Println(CRr + "[!] Usage: crypto quantum <url>" + CR)
+			return
+		}
+		url := parts[2]
+		fmt.Printf(CRg+"[CRYPTOBREACH]"+CR+" Quantum: %s\n", url)
+		cs.narrate("CRYPTOBREACH quantum vulnerability check on " + url)
+		cb := cryptobreach.New()
+		cb.QuantumCheck(url)
+		cb.Close()
+	case "status":
+		fmt.Println(CBl + "═══════════════════════════════════════════════════════════════" + CR)
+		fmt.Println(CBl + "              CRYPTOBREACH AGENT STATUS" + CR)
+		fmt.Println(CBl + "═══════════════════════════════════════════════════════════════" + CR)
+		fmt.Println("  HASH-BREAKER  [Cracking]    — idle")
+		fmt.Println("  CERT-HUNTER   [Certs]       — idle")
+		fmt.Println("  TLS-PHANTOM   [TLS]         — idle")
+		fmt.Println("  KEY-EXTRACT   [Keys]        — idle")
+		fmt.Println("  QUANTUM-SHADOW [Quantum]   — idle")
+		fmt.Println("  OMEGA         [Brain]       — idle")
+		fmt.Println()
+	default:
+		fmt.Println(CRr + "[!] Unknown crypto command: " + sub + CR)
+		fmt.Println("      Type 'crypto' for available commands.")
+	}
+}
+
+func (cs *ChatSession) handleCloudCommand(parts []string) {
+	if len(parts) < 2 {
+		fmt.Println(CBl + "═══════════════════════════════════════════════════════════════" + CR)
+		fmt.Println(CBl + "              CLOUDBREACH COMMANDS" + CR)
+		fmt.Println(CBl + "═══════════════════════════════════════════════════════════════" + CR)
+		fmt.Println("  cloud scan <provider>         Cloud reconnaissance")
+		fmt.Println("  cloud iam <provider>            IAM privilege escalation")
+		fmt.Println("  cloud buckets <provider>        Bucket raiding")
+		fmt.Println("  cloud containers <cluster>      Container escape")
+		fmt.Println("  cloud lambda <function>         Lambda backdooring")
+		fmt.Println("  cloud status                    Show agent status")
+		fmt.Println()
+		return
+	}
+
+	sub := strings.ToLower(parts[1])
+	switch sub {
+	case "scan":
+		if len(parts) < 3 {
+			fmt.Println(CRr + "[!] Usage: cloud scan <aws|azure|gcp|all>" + CR)
+			return
+		}
+		provider := parts[2]
+		fmt.Printf(CRg+"[CLOUDBREACH]"+CR+" Scan: %s\n", provider)
+		cs.narrate("CLOUDBREACH scanning " + provider)
+		clb := cloudbreach.New()
+		clb.Scan(provider)
+		clb.Close()
+	case "iam":
+		if len(parts) < 3 {
+			fmt.Println(CRr + "[!] Usage: cloud iam <aws|azure|gcp|all>" + CR)
+			return
+		}
+		provider := parts[2]
+		fmt.Printf(CRg+"[CLOUDBREACH]"+CR+" IAM: %s\n", provider)
+		cs.narrate("CLOUDBREACH IAM escalation on " + provider)
+		clb := cloudbreach.New()
+		clb.Escalate(provider)
+		clb.Close()
+	case "buckets":
+		if len(parts) < 3 {
+			fmt.Println(CRr + "[!] Usage: cloud buckets <aws|azure|gcp|all>" + CR)
+			return
+		}
+		provider := parts[2]
+		fmt.Printf(CRg+"[CLOUDBREACH]"+CR+" Buckets: %s\n", provider)
+		cs.narrate("CLOUDBREACH bucket raiding on " + provider)
+		clb := cloudbreach.New()
+		clb.RaidBuckets(provider)
+		clb.Close()
+	case "containers":
+		if len(parts) < 3 {
+			fmt.Println(CRr + "[!] Usage: cloud containers <cluster>" + CR)
+			return
+		}
+		cluster := parts[2]
+		fmt.Printf(CRg+"[CLOUDBREACH]"+CR+" Containers: %s\n", cluster)
+		cs.narrate("CLOUDBREACH container break on " + cluster)
+		clb := cloudbreach.New()
+		clb.BreakContainers(cluster)
+		clb.Close()
+	case "lambda":
+		if len(parts) < 3 {
+			fmt.Println(CRr + "[!] Usage: cloud lambda <function>" + CR)
+			return
+		}
+		funcName := parts[2]
+		fmt.Printf(CRg+"[CLOUDBREACH]"+CR+" Lambda: %s\n", funcName)
+		cs.narrate("CLOUDBREACH lambda backdoor on " + funcName)
+		clb := cloudbreach.New()
+		clb.BackdoorLambda(funcName)
+		clb.Close()
+	case "status":
+		fmt.Println(CBl + "═══════════════════════════════════════════════════════════════" + CR)
+		fmt.Println(CBl + "              CLOUDBREACH AGENT STATUS" + CR)
+		fmt.Println(CBl + "═══════════════════════════════════════════════════════════════" + CR)
+		fmt.Println("  CLOUD-SCANNER    [Recon]     — idle")
+		fmt.Println("  IAM-ESCALATOR    [IAM]       — idle")
+		fmt.Println("  BUCKET-RAIDER    [Buckets]   — idle")
+		fmt.Println("  CONTAINER-BREAKER [K8s]       — idle")
+		fmt.Println("  LAMBDA-PHANTOM   [Lambda]    — idle")
+		fmt.Println("  OMEGA            [Brain]      — idle")
+		fmt.Println()
+	default:
+		fmt.Println(CRr + "[!] Unknown cloud command: " + sub + CR)
+		fmt.Println("      Type 'cloud' for available commands.")
 	}
 }
 

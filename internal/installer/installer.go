@@ -144,6 +144,41 @@ var externalTools = []ToolDefinition{
 
 	// --- Social Engineering ---
 	{Name: "setoolkit", Description: "Social engineering toolkit", Category: "social", CheckCommand: "setoolkit --help", InstallMethods: []InstallMethod{{Type: "apt", Command: "set", Priority: 1}, {Type: "git_clone", Command: "https://github.com/trustedsec/social-engineer-toolkit.git", Priority: 2}}},
+
+	// --- NETBREACH Tools ---
+	{Name: "netexec", Description: "Network execution toolkit (NXC)", Category: "network", CheckCommand: "nxc --version", InstallMethods: []InstallMethod{{Type: "pip", Command: "netexec", Priority: 1}}},
+	{Name: "chisel", Description: "Fast TCP/UDP tunnel over HTTP", Category: "network", CheckCommand: "chisel --version", InstallMethods: []InstallMethod{{Type: "go_install", Command: "github.com/jpillora/chisel@latest", Priority: 1}}},
+	{Name: "ligolo-ng", Description: "Advanced tunneling/pivoting tool", Category: "network", CheckCommand: "ligolo-ng --help", InstallMethods: []InstallMethod{{Type: "go_install", Command: "github.com/nicocha30/ligolo-ng@latest", Priority: 1}}},
+	{Name: "sliver", Description: "Adversary simulation framework", Category: "network", CheckCommand: "sliver-client --version", InstallMethods: []InstallMethod{{Type: "go_install", Command: "github.com/BishopFox/sliver/client@latest", Priority: 1}}},
+	{Name: "laZagne", Description: "Credentials recovery tool", Category: "network", CheckCommand: "laZagne --help", InstallMethods: []InstallMethod{{Type: "git_pip", Command: "https://github.com/AlessandroZ/LaZagne.git", Priority: 1}}},
+	{Name: "certipy", Description: "ADCS exploitation", Category: "network", CheckCommand: "certipy --version", InstallMethods: []InstallMethod{{Type: "pip", Command: "certipy-ad", Priority: 1}}},
+	{Name: "coercer", Description: "Coercion attack tester", Category: "network", CheckCommand: "coercer --version", InstallMethods: []InstallMethod{{Type: "pip", Command: "coercer", Priority: 1}}},
+	{Name: "bloodhound-python", Description: "BloodHound Python collector", Category: "network", CheckCommand: "bloodhound-python --help", InstallMethods: []InstallMethod{{Type: "pip", Command: "bloodhound", Priority: 1}}},
+	{Name: "dnscat2", Description: "DNS tunnel C2", Category: "network", CheckCommand: "dnscat2 --help", InstallMethods: []InstallMethod{{Type: "git_clone", Command: "https://github.com/iagox86/dnscat2.git", Priority: 1}}},
+	{Name: "icmpsh", Description: "ICMP shell reverse shell", Category: "network", CheckCommand: "icmpsh --help", InstallMethods: []InstallMethod{{Type: "git_clone", Command: "https://github.com/bdamele/icmpsh.git", Priority: 1}}},
+
+	// --- CRYPTOBREACH Tools ---
+	{Name: "hashcat", Description: "World's fastest password cracker", Category: "crypto", CheckCommand: "hashcat --version", InstallMethods: []InstallMethod{{Type: "apt", Command: "hashcat", Priority: 1}}},
+	{Name: "john", Description: "John the Ripper password cracker", Category: "crypto", CheckCommand: "john --version", InstallMethods: []InstallMethod{{Type: "apt", Command: "john", Priority: 1}}},
+	{Name: "hashid", Description: "Hash type identifier", Category: "crypto", CheckCommand: "hashid --help", InstallMethods: []InstallMethod{{Type: "pip", Command: "hashid", Priority: 1}}},
+	{Name: "testssl.sh", Description: "TLS/SSL test tool", Category: "crypto", CheckCommand: "testssl.sh --version", InstallMethods: []InstallMethod{{Type: "git_clone", Command: "https://github.com/drwetter/testssl.sh.git", Priority: 1}}},
+	{Name: "sslyze", Description: "SSL/TLS scanner", Category: "crypto", CheckCommand: "sslyze --version", InstallMethods: []InstallMethod{{Type: "pip", Command: "sslyze", Priority: 1}}},
+	{Name: "rsactftool", Description: "RSACTFTool for RSA attacks", Category: "crypto", CheckCommand: "RsaCtfTool --help", InstallMethods: []InstallMethod{{Type: "git_pip", Command: "https://github.com/RsaCtfTool/RsaCtfTool.git", Priority: 1}}},
+	{Name: "bettercap", Description: "Network attack and monitoring", Category: "crypto", CheckCommand: "bettercap --version", InstallMethods: []InstallMethod{{Type: "apt", Command: "bettercap", Priority: 1}}},
+
+	// --- CLOUDBREACH Tools ---
+	{Name: "pacu", Description: "AWS exploitation framework", Category: "cloud", CheckCommand: "pacu --version", InstallMethods: []InstallMethod{{Type: "pip", Command: "pacu", Priority: 1}}},
+	{Name: "steampipe", Description: "SQL queries for cloud APIs", Category: "cloud", CheckCommand: "steampipe --version", InstallMethods: []InstallMethod{{Type: "apt", Command: "steampipe", Priority: 1}}},
+	{Name: "cloudsplaining", Description: "IAM privilege escalation scanner", Category: "cloud", CheckCommand: "cloudsplaining --version", InstallMethods: []InstallMethod{{Type: "pip", Command: "cloudsplaining", Priority: 1}}},
+	{Name: "s3scanner", Description: "S3 bucket enumeration", Category: "cloud", CheckCommand: "s3scanner --help", InstallMethods: []InstallMethod{{Type: "go_install", Command: "github.com/sa7mon/S3Scanner@latest", Priority: 1}}},
+	{Name: "peirates", Description: "K8s pentest tool", Category: "cloud", CheckCommand: "peirates --help", InstallMethods: []InstallMethod{{Type: "go_install", Command: "github.com/inguardians/peirates@latest", Priority: 1}}},
+	{Name: "kube-hunter", Description: "K8s vulnerability scanner", Category: "cloud", CheckCommand: "kube-hunter --version", InstallMethods: []InstallMethod{{Type: "pip", Command: "kube-hunter", Priority: 1}}},
+	{Name: "amicontained", Description: "Container capability checker", Category: "cloud", CheckCommand: "amicontained --help", InstallMethods: []InstallMethod{{Type: "go_install", Command: "github.com/genuinetools/amicontained@latest", Priority: 1}}},
+	{Name: "cdk", Description: "Container escape toolkit", Category: "cloud", CheckCommand: "cdk --version", InstallMethods: []InstallMethod{{Type: "go_install", Command: "github.com/cdk-team/CDK@latest", Priority: 1}}},
+	{Name: "enumerate-iam", Description: "IAM permission enumerator", Category: "cloud", CheckCommand: "enumerate-iam --help", InstallMethods: []InstallMethod{{Type: "git_pip", Command: "https://github.com/andresriancho/enumerate-iam.git", Priority: 1}}},
+	{Name: "cloud-nuke", Description: "Cloud resource destruction", Category: "cloud", CheckCommand: "cloud-nuke --version", InstallMethods: []InstallMethod{{Type: "go_install", Command: "github.com/gruntwork-io/cloud-nuke@latest", Priority: 1}}},
+	{Name: "cloudmapper", Description: "AWS infrastructure mapper", Category: "cloud", CheckCommand: "cloudmapper --help", InstallMethods: []InstallMethod{{Type: "git_pip", Command: "https://github.com/duo-labs/cloudmapper.git", Priority: 1}}},
+	{Name: "cartography", Description: "Cloud infrastructure mapper", Category: "cloud", CheckCommand: "cartography --help", InstallMethods: []InstallMethod{{Type: "pip", Command: "cartography", Priority: 1}}},
 }
 
 func GetNVHome() string {
