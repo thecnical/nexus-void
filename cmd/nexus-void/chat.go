@@ -211,21 +211,33 @@ func (cs *ChatSession) isDashboardRunning() bool {
 }
 
 func (cs *ChatSession) startBackend() {
-	cwd, err := os.Getwd()
-	if err != nil {
-		fmt.Println(CRr+"[!}"+CR+" Cannot determine working directory:", err)
-		return
-	}
+	// Priority 1: current dir backend/ (dev mode)
+	cwd, _ := os.Getwd()
+	devBackend := filepath.Join(cwd, "backend")
 
-	backendDir := filepath.Join(cwd, "backend")
-	if _, err := os.Stat(backendDir); os.IsNotExist(err) {
-		fmt.Println(CRy+"[!}"+CR+" Backend directory not found at", backendDir)
-		return
-	}
+	// Priority 2: installed path /opt/nexus-void/backend
+	installBackend := "/opt/nexus-void/backend"
 
-	backendBin := filepath.Join(backendDir, "server")
-	if os.PathSeparator == '\\' {
-		backendBin += ".exe"
+	// Priority 3: nexus-server in PATH
+	var backendDir, backendBin string
+	if _, err := os.Stat(devBackend); err == nil {
+		backendDir = devBackend
+		backendBin = filepath.Join(backendDir, "nexus-server")
+		if os.PathSeparator == '\\' {
+			backendBin += ".exe"
+		}
+	} else if _, err := os.Stat(installBackend); err == nil {
+		backendDir = installBackend
+		backendBin = filepath.Join(backendDir, "nexus-server")
+	} else {
+		// Priority 4: Try systemd service
+		systemd := exec.Command("systemctl", "start", "nexus-void-backend")
+		if err := systemd.Run(); err == nil {
+			fmt.Println(CRg + "[+}" + CR + " Backend started via systemd.")
+			return
+		}
+		fmt.Println(CRy + "[!}" + CR + " Backend not found. Install with: sudo bash install.sh")
+		return
 	}
 
 	var cmd *exec.Cmd
@@ -233,8 +245,8 @@ func (cs *ChatSession) startBackend() {
 		cmd = exec.Command(backendBin, "-addr", ":8080")
 		cmd.Dir = backendDir
 	} else {
-		cmd = exec.Command("go", "run", "./cmd/server", "-addr", ":8080")
-		cmd.Dir = backendDir
+		fmt.Println(CRy+"[!}"+CR+" Backend binary not found at", backendBin)
+		return
 	}
 
 	cmd.Stdout = os.Stdout
@@ -257,22 +269,34 @@ func (cs *ChatSession) startBackend() {
 }
 
 func (cs *ChatSession) startDashboard() {
-	cwd, err := os.Getwd()
-	if err != nil {
-		fmt.Println(CRr+"[!}"+CR+" Cannot determine working directory:", err)
-		return
-	}
+	// Priority 1: current dir dashboard/ (dev mode)
+	cwd, _ := os.Getwd()
+	devDashboard := filepath.Join(cwd, "dashboard")
 
-	dashboardDir := filepath.Join(cwd, "dashboard")
-	if _, err := os.Stat(dashboardDir); os.IsNotExist(err) {
-		fmt.Println(CRy+"[!}"+CR+" Dashboard directory not found at", dashboardDir)
+	// Priority 2: installed path /opt/nexus-void/dashboard
+	installDashboard := "/opt/nexus-void/dashboard"
+
+	var dashboardDir string
+	if _, err := os.Stat(devDashboard); err == nil {
+		dashboardDir = devDashboard
+	} else if _, err := os.Stat(installDashboard); err == nil {
+		dashboardDir = installDashboard
+	} else {
+		fmt.Println(CRy + "[!}" + CR + " Dashboard not found.")
 		return
 	}
 
 	nodeModules := filepath.Join(dashboardDir, "node_modules")
 	if _, err := os.Stat(nodeModules); os.IsNotExist(err) {
-		fmt.Println(CRy + "[!}" + CR + " Dashboard dependencies missing. Run 'npm install' in dashboard/")
-		return
+		fmt.Println(CRy + "[!}" + CR + " Installing dashboard dependencies...")
+		installCmd := exec.Command("npm", "install")
+		installCmd.Dir = dashboardDir
+		installCmd.Stdout = os.Stdout
+		installCmd.Stderr = os.Stderr
+		if err := installCmd.Run(); err != nil {
+			fmt.Println(CRr+"[!}"+CR+" npm install failed:", err)
+			return
+		}
 	}
 
 	cmd := exec.Command("npm", "start")

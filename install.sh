@@ -120,6 +120,17 @@ install_nexus() {
     # Create brain directory
     mkdir -p ~/.nexus-void/brain
     
+    # Install dashboard dependencies
+    if [ -d "${INSTALL_DIR}/dashboard" ]; then
+        echo -e "${CYAN}[*] Installing dashboard dependencies...${NC}"
+        cd ${INSTALL_DIR}/dashboard
+        if command -v npm &> /dev/null; then
+            npm install 2>/dev/null || echo -e "${YELLOW}[!} npm install skipped. Install Node.js first.${NC}"
+        else
+            echo -e "${YELLOW}[!} Node.js not found. Dashboard requires: sudo apt install nodejs npm${NC}"
+        fi
+    fi
+    
     echo -e "${GREEN}[+] Nexus Void installed successfully!${NC}"
     echo ""
 }
@@ -147,7 +158,15 @@ EOF
 
     sudo systemctl daemon-reload
     sudo systemctl enable nexus-void-backend
-    echo -e "${GREEN}[+] Systemd service created.${NC}"
+    sudo systemctl start nexus-void-backend
+    echo -e "${GREEN}[+] Systemd service created and started.${NC}"
+    echo ""
+}
+
+install_tools() {
+    echo -e "${CYAN}[*] Installing external tools (optional)...${NC}"
+    echo -e "${YELLOW}[*} This may take several minutes. Run manually:${NC}"
+    echo -e "${YELLOW}    nexus-void arsenal install-all${NC}"
     echo ""
 }
 
@@ -157,17 +176,19 @@ print_usage() {
     echo -e "${BOLD}${GREEN}╠═══════════════════════════════════════════════════════════════╣${NC}"
     echo -e "${BOLD}${GREEN}║${CYAN}  CLI Commands:                                               ${GREEN}║${NC}"
     echo -e "${BOLD}${GREEN}║${NC}    nexus-void --help            → Show all commands           ${GREEN}║${NC}"
-    echo -e "${BOLD}${GREEN}║${NC}    nexus-void chat               → Launch AI chat interface    ${GREEN}║${NC}"
+    echo -e "${BOLD}${GREEN}║${NC}    nexus-void chat               → Launch AI chat + backend   ${GREEN}║${NC}"
     echo -e "${BOLD}${GREEN}║${NC}    nexus-void scan <target>      → Quick reconnaissance      ${GREEN}║${NC}"
     echo -e "${BOLD}${GREEN}║${NC}    nexus-void apocalypse <target>→ Full autonomous assault   ${GREEN}║${NC}"
+    echo -e "${BOLD}${GREEN}║${NC}    nexus-void arsenal install-all→ Install 47 external tools ${GREEN}║${NC}"
     echo -e "${BOLD}${GREEN}║${NC}                                                                ${GREEN}║${NC}"
     echo -e "${BOLD}${GREEN}║${CYAN}  Backend Server:                                              ${GREEN}║${NC}"
-    echo -e "${BOLD}${GREEN}║${NC}    nexus-server -addr :8080     → Start API + WebSocket      ${GREEN}║${NC}"
-    echo -e "${BOLD}${GREEN}║${NC}    sudo systemctl start nexus-void-backend → Daemon mode     ${GREEN}║${NC}"
+    echo -e "${BOLD}${GREEN}║${NC}    Auto-running on systemd: localhost:8080                    ${GREEN}║${NC}"
+    echo -e "${BOLD}${GREEN}║${NC}    sudo systemctl status nexus-void-backend → Check status   ${GREEN}║${NC}"
     echo -e "${BOLD}${GREEN}║${NC}                                                                ${GREEN}║${NC}"
     echo -e "${BOLD}${GREEN}║${CYAN}  Dashboard:                                                   ${GREEN}║${NC}"
-    echo -e "${BOLD}${GREEN}║${NC}    cd ${INSTALL_DIR}/dashboard && npm install && npm run dev   ${GREEN}║${NC}"
-    echo -e "${BOLD}${GREEN}║${NC}    Open http://localhost:5173 in your browser                  ${GREEN}║${NC}"
+    echo -e "${BOLD}${GREEN}║${NC}    Auto-starts with: nexus-void chat                         ${GREEN}║${NC}"
+    echo -e "${BOLD}${GREEN}║${NC}    Or manual: cd ${INSTALL_DIR}/dashboard && npm start       ${GREEN}║${NC}"
+    echo -e "${BOLD}${GREEN}║${NC}    Open http://localhost:3000 in your browser                 ${GREEN}║${NC}"
     echo -e "${BOLD}${GREEN}║${NC}                                                                ${GREEN}║${NC}"
     echo -e "${BOLD}${GREEN}║${PURPLE}  Created by Chandan Pandey | cybermindcli.com               ${GREEN}║${NC}"
     echo -e "${BOLD}${GREEN}╚═══════════════════════════════════════════════════════════════╝${NC}"
@@ -179,6 +200,7 @@ print_banner
 check_dependencies
 install_nexus
 setup_systemd
+install_tools
 print_usage
 
 echo -e "${GREEN}[+] Ready to breach. The swarm awaits your command.${NC}"
