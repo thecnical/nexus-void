@@ -66,6 +66,19 @@ check_dependencies() {
         echo -e "${YELLOW}[!] Git not found. Installing...${NC}"
         sudo apt-get update && sudo apt-get install -y git
     fi
+
+    if ! command -v npm &> /dev/null; then
+        echo -e "${YELLOW}[!] Node.js/npm not found. Installing...${NC}"
+        sudo apt-get update && sudo apt-get install -y nodejs npm
+        if ! command -v npm &> /dev/null; then
+            echo -e "${YELLOW}[!} apt install failed. Trying NodeSource...${NC}"
+            curl -fsSL https://deb.nodesource.com/setup_20.x | sudo bash -
+            sudo apt-get install -y nodejs
+        fi
+        echo -e "${GREEN}[+] Node.js installed: $(node --version)${NC}"
+    else
+        echo -e "${GREEN}[+] Node.js found: $(node --version)${NC}"
+    fi
     
     echo -e "${GREEN}[+] All dependencies satisfied.${NC}"
     echo ""
@@ -180,6 +193,7 @@ print_usage() {
     echo -e "${BOLD}${GREEN}║${NC}    nexus-void scan <target>      → Quick reconnaissance      ${GREEN}║${NC}"
     echo -e "${BOLD}${GREEN}║${NC}    nexus-void apocalypse <target>→ Full autonomous assault   ${GREEN}║${NC}"
     echo -e "${BOLD}${GREEN}║${NC}    nexus-void arsenal install-all→ Install 47 external tools ${GREEN}║${NC}"
+    echo -e "${BOLD}${GREEN}║${NC}    nexus-void uninstall          → Remove from system        ${GREEN}║${NC}"
     echo -e "${BOLD}${GREEN}║${NC}                                                                ${GREEN}║${NC}"
     echo -e "${BOLD}${GREEN}║${CYAN}  Backend Server:                                              ${GREEN}║${NC}"
     echo -e "${BOLD}${GREEN}║${NC}    Auto-running on systemd: localhost:8080                    ${GREEN}║${NC}"
